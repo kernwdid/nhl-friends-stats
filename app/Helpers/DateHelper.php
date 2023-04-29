@@ -93,4 +93,8 @@ class DateHelper
         }
         return __('activity_log.over_year');
     }
+
+    public static function minuteAndSecondFormatFromSeconds($seconds): string {
+        return gmdate(config("app.time_m_s_format"), $seconds);
+    }
 }

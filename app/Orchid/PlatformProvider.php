@@ -36,11 +36,11 @@ class PlatformProvider extends OrchidServiceProvider
 
             Menu::make(__('games.title'))
             ->icon('game-controller')
-            ->route('platform.games')
+                ->route('platform.resource.list', ['resource' => 'game-resources'])
             ->badge(fn () => 1),
 
             Menu::make(__('teams.title'))
-                ->icon('game-controller')
+                ->icon('people')
                 ->route('platform.resource.list', ['resource' => 'team-resources']),
 
             Menu::make(__('Users'))

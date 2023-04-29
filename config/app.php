@@ -75,6 +75,7 @@ return [
     'datetime_format' => 'd.m.Y H:i',
     'time_format' => 'H:i',
     'time_s_format' => 'H:i:s',
+    'time_m_s_format' => 'i:s',
     'db_date_format' => 'Y-m-d',
     'db_datetime_s_format' => 'Y-m-d H:i:s',
     'db_datetime_format' => 'Y-m-d H:i',

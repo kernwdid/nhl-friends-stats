@@ -10,6 +10,7 @@
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
+        "mpociot/versionable": "^4.4",
         "orchid/crud": "^3.9",
         "orchid/platform": "^13.10"
     },
