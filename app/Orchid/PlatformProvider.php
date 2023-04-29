@@ -32,45 +32,16 @@ class PlatformProvider extends OrchidServiceProvider
             Menu::make(__('Dashboard'))
                 ->icon('chart')
                 ->route('platform.main')
-                ->title('Home'),
+                ->title('Navigation'),
 
             Menu::make(__('games.title'))
             ->icon('game-controller')
             ->route('platform.games')
-            ->title('Navigation')
             ->badge(fn () => 1),
 
-            Menu::make('Basic Elements')
-                ->title('Form controls')
-                ->icon('note')
-                ->route('platform.example.fields'),
-
-            Menu::make('Example screen')
-                ->icon('monitor')
-                ->route('platform.example')
-                ->badge(fn () => 6),
-
-            Menu::make('Advanced Elements')
-                ->icon('briefcase')
-                ->route('platform.example.advanced'),
-
-            Menu::make('Text Editors')
-                ->icon('list')
-                ->route('platform.example.editors'),
-
-            Menu::make('Overview layouts')
-                ->title('Layouts')
-                ->icon('layers')
-                ->route('platform.example.layouts'),
-
-            Menu::make('Chart tools')
-                ->icon('bar-chart')
-                ->route('platform.example.charts'),
-
-            Menu::make('Cards')
-                ->icon('grid')
-                ->route('platform.example.cards')
-                ->divider(),
+            Menu::make(__('teams.title'))
+                ->icon('game-controller')
+                ->route('platform.resource.list', ['resource' => 'team-resources']),
 
             Menu::make(__('Users'))
                 ->icon('user')
