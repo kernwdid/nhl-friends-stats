@@ -18,7 +18,11 @@ class UserAndAuthSeeder extends Seeder
     {
         $abcPassword = '$2y$10$1kBHrdBhRu.MLkBgW3Oc/uScdTs4Mj9TOHwt7OV3bKW7LzAlqAjRS';
 
-        $playerRole = Role::create(['slug' => 'player', 'name' => 'Spieler']);
+        $playerRole = Role::create(['slug' => 'player', 'name' => 'Spieler', 'permissions' => [
+            'platform.index' => 1,
+            'resource.games' => 1,
+            'resource.teams' => 1
+        ]]);
 
         User::factory()->create([
             'name' => 'Didier',

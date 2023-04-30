@@ -148,6 +148,11 @@ class GameResource extends Resource
         $model->forceFill($data)->save();
     }
 
+    public static function permission(): ?string
+    {
+        return 'resource.games';
+    }
+
 
     /**
      * Get the columns displayed by the resource.

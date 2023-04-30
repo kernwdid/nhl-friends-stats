@@ -22,12 +22,7 @@ class GamePolicy
 
     public function delete(User $user)
     {
-        $adminRole = Role::where('name', 'admin')->first();
-
-        if ($adminRole) {
-            return $user->inRole($adminRole);
-        }
-        return false;
+            return $user->id == 1;
     }
 
     public function update()

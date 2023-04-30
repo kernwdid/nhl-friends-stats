@@ -2,6 +2,7 @@
 
 
 return [
+    'total' => 'Total Spiele',
     'title' => 'Spiele',
     'add' => 'Spiel hinzufügen',
     'description' => 'Hier können neue Spiele erfasst und bestehende verwaltet werden.',

@@ -8,7 +8,6 @@ use Orchid\Platform\Dashboard;
 use Orchid\Platform\ItemPermission;
 use Orchid\Platform\OrchidServiceProvider;
 use Orchid\Screen\Actions\Menu;
-use Orchid\Support\Color;
 
 class PlatformProvider extends OrchidServiceProvider
 {
@@ -35,12 +34,13 @@ class PlatformProvider extends OrchidServiceProvider
                 ->title('Navigation'),
 
             Menu::make(__('games.title'))
-            ->icon('game-controller')
-                ->route('platform.resource.list', ['resource' => 'game-resources'])
-            ->badge(fn () => 1),
+                ->icon('game-controller')
+                ->permission('resource.games')
+                ->route('platform.resource.list', ['resource' => 'game-resources']),
 
             Menu::make(__('teams.title'))
                 ->icon('people')
+                ->permission('resource.teams')
                 ->route('platform.resource.list', ['resource' => 'team-resources']),
 
             Menu::make(__('Users'))

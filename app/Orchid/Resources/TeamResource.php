@@ -128,6 +128,11 @@ class TeamResource extends Resource
         return false;
     }
 
+    public static function permission(): ?string
+    {
+        return 'resource.teams';
+    }
+
     /**
      * Get the filters available for the resource.
      *
