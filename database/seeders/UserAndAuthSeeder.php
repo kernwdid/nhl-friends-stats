@@ -21,14 +21,20 @@ class UserAndAuthSeeder extends Seeder
         $playerRole = Role::create(['slug' => 'player', 'name' => 'Spieler']);
 
         User::factory()->create([
-            'name' => 'Friend 1',
-            'email' => 'friend1@example.com',
+            'name' => 'Didier',
+            'email' => 'didier@example.com',
             'password' => $abcPassword
         ])->addRole($playerRole);
 
         User::factory()->create([
-            'name' => 'Friend 2',
-            'email' => 'friend2@example.com',
+            'name' => 'Sami',
+            'email' => 'sami@example.com',
+            'password' => $abcPassword
+        ])->addRole($playerRole);
+
+        User::factory()->create([
+            'name' => 'Alex',
+            'email' => 'alex@example.com',
             'password' => $abcPassword
         ])->addRole($playerRole);
     }

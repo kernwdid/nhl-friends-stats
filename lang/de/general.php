@@ -3,7 +3,8 @@
 return [
     'by' => 'von',
     'oclock' => 'Uhr',
-    'created_at' => 'Erstellungsdatum',
-    'updated_at' => 'Zuletzt bearbeitet am',
-    'actions' => 'Aktionen'
+    'created_at' => 'Erstellt am',
+    'updated_at' => 'Bearbeitet am',
+    'actions' => 'Aktionen',
+    'select' => 'Auswählen'
 ];
