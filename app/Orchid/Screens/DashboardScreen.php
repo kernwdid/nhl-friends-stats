@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Orchid\Screens;
 
+use App\Helpers\DateHelper;
 use App\Models\Game;
 use Illuminate\Support\Facades\DB;
 use Orchid\Platform\Models\Role;
@@ -58,6 +59,22 @@ class DashboardScreen extends Screen
                     ->orderBy('highest_win', 'desc')
                     ->first();
 
+                $shotsAvg = Game::where('home_user_id', $userId)
+                    ->where('away_user_id', $player->id)
+                    ->select(DB::raw('ROUND( AVG(games.goals_home)::numeric, 2) AS avg'))
+                    ->orWhere('away_user_id', $userId)
+                    ->where('home_user_id', $player->id)
+                    ->select(DB::raw('ROUND( AVG(games.goals_away)::numeric, 2) AS avg'))
+                    ->first();
+
+                $timeInOffenseAvg = Game::where('home_user_id', $userId)
+                    ->where('away_user_id', $player->id)
+                    ->select(DB::raw('AVG(games.time_in_offense_home_in_seconds) AS avg'))
+                    ->orWhere('away_user_id', $userId)
+                    ->where('home_user_id', $player->id)
+                    ->select(DB::raw('AVG(games.time_in_offense_away_in_seconds) AS avg'))
+                    ->first();
+
                 $losses = Game::where('home_user_id', $userId)
                     ->where('away_user_id', $player->id)
                     ->whereRaw('goals_home < goals_away')
@@ -81,7 +98,8 @@ class DashboardScreen extends Screen
                 $metrics['losses_' . $player['id']] = ['value' => number_format($losses)];
                 $metrics['highest_win_' . $player['id']] = ['value' => $highestWin['first'] . " - " . $highestWin['second']];
                 $metrics['highest_loss_' . $player['id']] = ['value' => $highestLoss['first'] . " - " . $highestLoss['second']];
-
+                $metrics['avg_shots_' . $player['id']] = ['value' => $shotsAvg['avg']];
+                $metrics['avg_time_in_offense_against_' . $player['id']] = ['value' => DateHelper::minuteAndSecondFormatFromSeconds($timeInOffenseAvg['avg'])];
             }
 
             $query['metrics'] = $metrics;
@@ -155,6 +173,8 @@ class DashboardScreen extends Screen
                 $metrics[__('dashboard.losses_against') . " " . $name] = 'metrics.losses_' . $player['id'];
                 $metrics[__('dashboard.highest_win_against') . " " . $name] = 'metrics.highest_win_' . $player['id'];
                 $metrics[__('dashboard.highest_loss_against') . " " . $name] = 'metrics.highest_loss_' . $player['id'];
+                $metrics[__('dashboard.avg_shots_against') . " " . $name] = 'metrics.avg_shots_' . $player['id'];
+                $metrics[__('dashboard.avg_time_in_offense_against') . " " . $name] = 'metrics.avg_time_in_offense_against_' . $player['id'];
             }
 
             $content[] = Layout::metrics($metrics);
