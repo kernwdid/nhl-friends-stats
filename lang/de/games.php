@@ -30,6 +30,6 @@ return [
     'powerplays_received_away' => 'Powerplays erhalten Auswärts',
     'powerplay_time_home_in_seconds' => 'Powerplay Minuten Heim',
     'powerplay_time_away_in_seconds' => 'Powerplay Minuten Auswärts',
-    'shorthanded_goals_home' => 'Tore in Underzahl Heim',
-    'shorthanded_goals_away' => 'Tore in Underzahl Heim',
+    'shorthanded_goals_home' => 'Tore in Unterzahl Heim',
+    'shorthanded_goals_away' => 'Tore in Unterzahl Auswärts',
 ];
