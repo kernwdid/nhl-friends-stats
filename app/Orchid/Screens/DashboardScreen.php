@@ -102,10 +102,14 @@ class DashboardScreen extends Screen
                         WHEN home_user_id = {$userId} THEN goals_home
                         WHEN away_user_id = {$userId} THEN goals_away
                     END)::numeric, 2) as avg_goals,
-                                ROUND(AVG(CASE
+                    ROUND(AVG(CASE
                         WHEN home_user_id = {$userId} THEN shots_home
                         WHEN away_user_id = {$userId} THEN shots_away
-                    END)::numeric, 2) as avg_shots
+                    END)::numeric, 2) as avg_shots,
+                    ROUND(AVG(CASE
+                        WHEN home_user_id = {$userId} THEN pass_percentage_home
+                        WHEN away_user_id = {$userId} THEN pass_percentage_away
+                    END)::numeric, 2) as avg_pass_percentage
                 "))->where('home_user_id', $userId)->where('away_user_id', $player->id)
                     ->orWhere('away_user_id', $userId)->where('home_user_id', $player->id)->first();
 
@@ -144,6 +148,7 @@ class DashboardScreen extends Screen
                 $playerMetrics['avg_goals_' . $player['id']] = ['value' => $playerStats['avg_goals']];
                 $playerMetrics['avg_shots_' . $player['id']] = ['value' => $playerStats['avg_shots']];
                 $playerMetrics['avg_hits_' . $player['id']] = ['value' => $playerStats['avg_hits']];
+                $playerMetrics['avg_pass_percentage_' . $player['id']] = ['value' => $playerStats['avg_pass_percentage']];
                 $playerMetrics['avg_time_in_offense_against_' . $player['id']] = ['value' =>
                     DateHelper::minuteAndSecondFormatFromSeconds($playerStats['avg_offense_time'])];
             }
@@ -232,6 +237,7 @@ class DashboardScreen extends Screen
                 $playerMetrics[__('dashboard.avg_goals_against') . " " . $name] = 'player_metrics.avg_goals_' . $player['id'];
                 $playerMetrics[__('dashboard.avg_shots_against') . " " . $name] = 'player_metrics.avg_shots_' . $player['id'];
                 $playerMetrics[__('dashboard.avg_hits_against') . " " . $name] = 'player_metrics.avg_hits_' . $player['id'];
+                $playerMetrics[__('dashboard.avg_pass_percentage') . " " . $name] = 'player_metrics.avg_pass_percentage_' . $player['id'];
                 $playerMetrics[__('dashboard.avg_time_in_offense_against') . " " . $name] = 'player_metrics.avg_time_in_offense_against_' . $player['id'];
             }
 

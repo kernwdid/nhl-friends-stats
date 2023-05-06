@@ -9,6 +9,7 @@ return [
     'avg_goals_against' => 'Ø Tore gegen',
     'avg_shots_against' => 'Ø Schüsse gegen',
     'avg_hits_against' => 'Ø Checks gegen',
+    'avg_pass_percentage' => 'Passgenauigkeit in % gegen',
     'avg_time_in_offense_against' => 'Ø Offensivzeit gegen',
     'total_goals' => 'Total Tore',
     'total_shots' => 'Total Schüsse',
