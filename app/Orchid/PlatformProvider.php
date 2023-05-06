@@ -30,7 +30,7 @@ class PlatformProvider extends OrchidServiceProvider
 
             Menu::make(__('Dashboard'))
                 ->icon('chart')
-                ->route('platform.main')
+                ->route('platform.dashboard')
                 ->title('Navigation'),
 
             Menu::make(__('games.title'))

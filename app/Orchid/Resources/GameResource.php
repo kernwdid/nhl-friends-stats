@@ -170,11 +170,13 @@ class GameResource extends Resource
                 return $game->away_user->name;
             })->sort(),
             TD::make('home_team', __('games.home_team'))->render(function ($game) {
-                return $game->home_team->name;
-            })->filter()->sort(),
-            TD::make(__('games.away_team'))->render(function ($game) {
-                return $game->away_team->name;
-            })->filter()->sort(),
+                $asset = asset("logos/" . $game->home_team->name . ".svg");
+                return '<img height="25" src="' . (str_contains($game->home_team->name, "All-Stars") ? asset("logos/nhl.svg") : $asset) . '" />';
+            })->sort(),
+            TD::make('away_team', __('games.away_team'))->render(function ($game) {
+                $asset = asset("logos/" . $game->away_team->name . ".svg");
+                return '<img height="25" src="' . (str_contains($game->away_team->name, "All-Stars") ? asset("logos/nhl.svg") : $asset) . '" />';
+            })->sort(),
             TD::make(__('games.goals_home'))->render(function ($game) {
                 return $game->goals_home;
             })->sort()->alignRight(),
@@ -207,10 +209,12 @@ class GameResource extends Resource
                 return $game->away_user->name;
             }),
             Sight::make('home_team', __('games.home_team'))->render(function ($game) {
-                return $game->home_team->name;
+                $asset = asset("logos/" . $game->home_team->name . ".svg");
+                return '<img height="25" src="' . (str_contains($game->home_team->name, "All-Stars") ? asset("logos/nhl.svg") : $asset) . '" />' . $game->home_team->name;
             }),
             Sight::make('away_team', __('games.away_team'))->render(function ($game) {
-                return $game->away_team->name;
+                $asset = asset("logos/" . $game->away_team->name . ".svg");
+                return '<img height="25" src="' . (str_contains($game->away_team->name, "All-Stars") ? asset("logos/nhl.svg") : $asset) . '" />' . $game->away_team->name;
             }),
             Sight::make('goals_home', __('games.goals_home')),
             Sight::make('goals_away', __('games.goals_away')),
