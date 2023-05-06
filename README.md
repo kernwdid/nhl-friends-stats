@@ -9,6 +9,37 @@ didiwein[at]hotmail.com
 
 <a href="https://www.buymeacoffee.com/didiweinh" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 
+## Statistics
+
+- Total games
+- Total goals
+- Average goals per game
+- Total shots
+- Average shots for one goal
+- Total hits
+
+Against each player you played against the following stats are available:
+
+- Wins against player
+- Losses against player
+- Highest win (largest difference)
+- Highest loss (largest difference)
+- Average goals against player
+- Average shots against player
+- Average checks against player
+- Average pass percentage against player
+- Average time in offense against player
+
+## Content
+
+In addition, the application provides:
+
+- Role and user management
+- Login & Authentication
+- CRUD of games
+- CRUD of teams and their strengths
+- Language support for german and english (not 100%)
+
 ## OCR
 
 Instead of typing in all the stats manually, In the future I plan to automatically detect stats by taking a picture of the result screen like this:
