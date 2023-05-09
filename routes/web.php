@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\VisionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,3 +14,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/test-ocr', [VisionController::class, 'test'])->name('vision.test');
