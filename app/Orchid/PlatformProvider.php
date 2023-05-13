@@ -33,6 +33,9 @@ class PlatformProvider extends OrchidServiceProvider
                 ->route('platform.dashboard')
                 ->title('Navigation'),
 
+            Menu::make(__(__('games.upload_result')))
+                ->icon('picture')->permission('resource.games')
+            ->route('platform.vision.index'),
             Menu::make(__('games.title'))
                 ->icon('game-controller')
                 ->permission('resource.games')

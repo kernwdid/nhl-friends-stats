@@ -114,7 +114,11 @@ class TeamResource extends Resource
     public function legend(): array
     {
         return [
-            Sight::make('name'),
+            Sight::make('name', __('games.home_team'))->render(function ($team) {
+                $asset = asset("logos/" . $team->name . ".svg");
+                return '<img height="25" src="' . (str_contains($team->name, "All-Stars") ? asset("logos/nhl.svg") : $asset) . '" />' . $team->name;
+            }),
+            Sight::make('abbreviation'),
             Sight::make('division'),
             Sight::make('overall_rating', __('teams.overall_rating')),
             Sight::make('offense_rating', __('teams.offense_rating')),

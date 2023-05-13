@@ -106,16 +106,39 @@ class GameResource extends Resource
             Input::make('penalty_minutes_home_in_seconds')
                 ->addBeforeRender($parseSeconds)
                 ->mask('99:99')
+                ->required()
                 ->title(__('games.penalty_minutes_home_in_seconds')),
-            Input::make('penalty_minutes_away_in_seconds')->addBeforeRender($parseSeconds)->mask('99:99')->title(__('games.penalty_minutes_away_in_seconds')),
-            Input::make('powerplays_used_home')->type('number')->title(__('games.powerplays_used_home')),
-            Input::make('powerplays_used_away')->type('number')->title(__('games.powerplays_used_away')),
-            Input::make('powerplays_received_home')->type('number')->title(__('games.powerplays_received_home')),
-            Input::make('powerplays_received_away')->type('number')->title(__('games.powerplays_received_away')),
-            Input::make('powerplay_time_home_in_seconds')->addBeforeRender($parseSeconds)->mask('99:99')->title(__('games.powerplay_time_home_in_seconds')),
-            Input::make('powerplay_time_away_in_seconds')->addBeforeRender($parseSeconds)->mask('99:99')->title(__('games.powerplay_time_away_in_seconds')),
-            Input::make('shorthanded_goals_home')->type('number')->title(__('games.shorthanded_goals_home')),
-            Input::make('shorthanded_goals_away')->type('number')->title(__('games.shorthanded_goals_away')),
+            Input::make('penalty_minutes_away_in_seconds')->addBeforeRender($parseSeconds)
+                ->required()
+                ->mask('99:99')->title(__('games.penalty_minutes_away_in_seconds')),
+            Input::make('powerplays_used_home')
+                ->required()
+                ->type('number')->title(__('games.powerplays_used_home')),
+            Input::make('powerplays_used_away')
+                ->required()
+                ->type('number')->title(__('games.powerplays_used_away')),
+            Input::make('powerplays_received_home')
+                ->required()
+                ->type('number')->title(__('games.powerplays_received_home')),
+            Input::make('powerplays_received_away')
+                ->required()
+                ->type('number')->title(__('games.powerplays_received_away')),
+            Input::make('powerplay_time_home_in_seconds')
+                ->required()
+                ->addBeforeRender($parseSeconds)->mask('99:99')->title(__('games.powerplay_time_home_in_seconds')),
+            Input::make('powerplay_time_away_in_seconds')
+                ->addBeforeRender($parseSeconds)
+                ->required()
+                ->mask('99:99')
+                ->title(__('games.powerplay_time_away_in_seconds')),
+            Input::make('shorthanded_goals_home')
+                ->required()
+                ->type('number')
+                ->title(__('games.shorthanded_goals_home')),
+            Input::make('shorthanded_goals_away')
+                ->required()
+                ->type('number')
+                ->title(__('games.shorthanded_goals_away')),
         ];
     }
 

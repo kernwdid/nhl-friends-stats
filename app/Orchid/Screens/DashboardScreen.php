@@ -203,7 +203,6 @@ class DashboardScreen extends Screen
         $userId = auth()->user()->id;
         $content = [
             Layout::view('platform::partials.update-assets'),
-            Layout::view('dashboard')
         ];
         $isPlayer = auth()->user()->inRole(Role::where('slug', 'player')->firstOrFail());
         if ($isPlayer) {

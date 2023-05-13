@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
+use App\Models\Team;
 use Google\Cloud\Core\Exception\GoogleException;
 use Google\Cloud\Vision\V1\ImageAnnotatorClient;
 
 class VisionController extends Controller
 {
 
-    public function test(): array|string
+    public function getNHLResultFromImage(string $imageContent): array|string
     {
         try {
             putenv("GOOGLE_APPLICATION_CREDENTIALS=" . base_path("gc_config.json"));
 
             $result = [];
 
-            $exampleFilePath = base_path("example4.jpeg");
-            if (file_exists($exampleFilePath)) {
-                $image = file_get_contents($exampleFilePath);
+            if ($imageContent != "") {
                 $imageAnnotator = new ImageAnnotatorClient();
-                $response = $imageAnnotator->textDetection($image);
+                $response = $imageAnnotator->textDetection($imageContent);
                 $texts = $response->getTextAnnotations();
                 foreach ($texts as $key => $text) {
                     if ($key == 0) {
@@ -185,128 +185,160 @@ class VisionController extends Controller
 
     private function fieldPatternRecognition(array $arr): array
     {
-        $res = [];
+        $res = [
+            'view_result' => implode(',', $arr)
+        ];
         $elements = count($arr);
         $replacements = ["%", "\n", "\r", "\r\n", " "];
         $index = 0;
 
-        if (preg_match('/\d\s?-\s?\d/', $arr[$index])) {
-            $res['RESULT'] = str_replace($replacements, "", $arr[$index]);
+        $nextMatches = [];
+        $foundMatches = preg_match('/(\d)\s?-\s?(\d)/', $arr[$index], $nextMatches);
+        if ($foundMatches) {
+            if (count($nextMatches) > 1) {
+                $res['goals_away'] = $nextMatches[1];
+
+            }
+            if (count($nextMatches) > 2) {
+                $res['goals_home'] = $nextMatches[2];
+            }
         }
 
-        if (preg_match('/[A-Z]{3}/', $arr[$index + 1])) {
-            $res['AWAY_TEAM'] = str_replace($replacements, "", $arr[$index + 1]);
+        if ($index < $elements && preg_match('/[A-Z]{3}/', $arr[$index + 1])) {
+            $abbreviation = str_replace($replacements, "", $arr[$index + 1]);
+            $team = Team::where('abbreviation', $abbreviation)->first();
+            if ($team) {
+                $res['away_team_id'] = $team->id;
+            }
         }
 
         if ($index + 1 < $elements && preg_match('/[A-Z]{3}/', $arr[$index + 2])) {
-            $res['HOME_TEAM'] = str_replace($replacements, "", $arr[$index + 2]);
+            $abbreviation = str_replace($replacements, "", $arr[$index + 2]);
+            $team = Team::where('abbreviation', $abbreviation)->first();
+            if ($team) {
+                $res['home_team_id'] = $team->id;
+            }
         }
 
         if ($index + 2 < $elements && preg_match('/\d+/', $arr[$index + 3])) {
-            $res['SHOTS_AWAY'] = str_replace($replacements, "", $arr[$index + 3]);
+            $res['shots_away'] = str_replace($replacements, "", $arr[$index + 3]);
         }
 
-        $shotsHomeIndex = $this->getNext($index + 4, $arr, '/\d+/');
+
+        $shotsHomeIndex = $this->getNext($index + 4, $arr, '/\d+/', $nextMatches);
         if ($shotsHomeIndex === false) {
             return $res;
         }
-        $res['SHOTS_HOME'] = str_replace($replacements, "", $arr[$shotsHomeIndex]);
+        $res['shots_home'] = str_replace($replacements, "", $arr[$shotsHomeIndex]);
 
-        $hitsAwayIndex = $this->getNext($shotsHomeIndex + 1, $arr, '/\d+/');
+        $hitsAwayIndex = $this->getNext($shotsHomeIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($hitsAwayIndex === false) {
             return $res;
         }
-        $res['HITS_AWAY'] = str_replace($replacements, "", $arr[$hitsAwayIndex]);
+        $res['hits_away'] = str_replace($replacements, "", $arr[$hitsAwayIndex]);
 
-        $hitsHomeIndex = $this->getNext($hitsAwayIndex + 1, $arr, '/\d+/');
+        $hitsHomeIndex = $this->getNext($hitsAwayIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($hitsHomeIndex === false) {
             return $res;
         }
-        $res['HITS_HOME'] = str_replace($replacements, "", $arr[$hitsHomeIndex]);
+        $res['hits_home'] = str_replace($replacements, "", $arr[$hitsHomeIndex], $nextMatches);
 
-        $awayTimeOnAttackIndex = $this->getNext($hitsHomeIndex + 1, $arr, '/\d{2}:\d{2}/');
+        $awayTimeOnAttackIndex = $this->getNext($hitsHomeIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($awayTimeOnAttackIndex === false) {
             return $res;
         }
-        $res['TIME_ON_ATTACK_AWAY'] = str_replace($replacements, "", $arr[$awayTimeOnAttackIndex]);
+        $awayMinutesAndSeconds = str_replace($replacements, "", $arr[$awayTimeOnAttackIndex]);
+        $res['time_in_offense_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($awayMinutesAndSeconds);
 
-        $homeTimeOnAttackIndex = $this->getNext($awayTimeOnAttackIndex + 1, $arr, '/\d{2}:\d{2}/');
+        $homeTimeOnAttackIndex = $this->getNext($awayTimeOnAttackIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($homeTimeOnAttackIndex === false) {
             return $res;
         }
-        $res['TIME_ON_ATTACK_HOME'] = str_replace($replacements, "", $arr[$homeTimeOnAttackIndex]);
+        $homeMinutesAndSeconds = str_replace($replacements, "", $arr[$homeTimeOnAttackIndex]);
+        $res['time_in_offense_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($homeMinutesAndSeconds);
 
-        $passPercentageAwayIndex = $this->getNext($homeTimeOnAttackIndex + 1, $arr, '/\d{2}(?:\.\d)?/');
+        $passPercentageAwayIndex = $this->getNext($homeTimeOnAttackIndex + 1, $arr, '/\d{2}(?:\.\d)?/', $nextMatches);
         if ($passPercentageAwayIndex === false) {
             return $res;
         }
-        $res['PASS_PERCENTAGE_AWAY'] = str_replace($replacements, '', $arr[$passPercentageAwayIndex]);
+        $res['pass_percentage_away'] = floatval(str_replace($replacements, '', $arr[$passPercentageAwayIndex]));
 
-        $passPercentageHomeIndex = $this->getNext($passPercentageAwayIndex + 1, $arr, '/\d{2}(?:\.\d)?/');
+        $passPercentageHomeIndex = $this->getNext($passPercentageAwayIndex + 1, $arr, '/\d{2}(?:\.\d)?/', $nextMatches);
         if ($passPercentageHomeIndex === false) {
             return $res;
         }
-        $res['PASS_PERCENTAGE_HOME'] = str_replace($replacements, '', $arr[$passPercentageHomeIndex]);
+        $res['pass_percentage_home'] = floatval(str_replace($replacements, '', $arr[$passPercentageHomeIndex]));
 
-        $faceoffsAwayIndex = $this->getNext($passPercentageHomeIndex + 1, $arr, '/\d+/');
+        $faceoffsAwayIndex = $this->getNext($passPercentageHomeIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($faceoffsAwayIndex === false) {
             return $res;
         }
-        $res['FACEOFFS_AWAY'] = str_replace($replacements, "", $arr[$faceoffsAwayIndex]);
+        $res['faceoffs_won_away'] = str_replace($replacements, "", $arr[$faceoffsAwayIndex]);
 
-        $faceoffsHomeIndex = $this->getNext($faceoffsAwayIndex + 1, $arr, '/\d+/');
+        $faceoffsHomeIndex = $this->getNext($faceoffsAwayIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($faceoffsHomeIndex === false) {
             return $res;
         }
-        $res['FACEOFFS_HOME'] = str_replace($replacements, "", $arr[$faceoffsHomeIndex]);
+        $res['faceoffs_won_home'] = str_replace($replacements, "", $arr[$faceoffsHomeIndex]);
 
-        $awayPenaltyMinutesIndex = $this->getNext($faceoffsHomeIndex + 1, $arr, '/\d{2}:\d{2}/');
+        $awayPenaltyMinutesIndex = $this->getNext($faceoffsHomeIndex + 1, $arr, '/\d{2}:\d{2}/',$nextMatches);
         if ($awayPenaltyMinutesIndex === false) {
             return $res;
         }
-        $res['PENALTY_MINUTES_AWAY'] = str_replace($replacements, "", $arr[$awayPenaltyMinutesIndex]);
+        $res['penalty_minutes_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$awayPenaltyMinutesIndex]));
 
-        $homePenaltyMinutesIndex = $this->getNext($awayPenaltyMinutesIndex + 1, $arr, '/\d{2}:\d{2}/');
+        $homePenaltyMinutesIndex = $this->getNext($awayPenaltyMinutesIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($homePenaltyMinutesIndex === false) {
             return $res;
         }
-        $res['PENALTY_MINUTES_HOME'] = str_replace($replacements, "", $arr[$homePenaltyMinutesIndex]);
+        $res['penalty_minutes_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$homePenaltyMinutesIndex]));
 
-        $powerplaysAwayIndex = $this->getNext($homePenaltyMinutesIndex + 1, $arr, '/\d[\\\\\/]+\d/');
+        $nextMatches = [];
+        $powerplaysAwayIndex = $this->getNext($homePenaltyMinutesIndex + 1, $arr, '/(\d)[\\\\\/]+(\d)/', $nextMatches);
         if ($powerplaysAwayIndex === false) {
             return $res;
         }
-        $res['POWERPLAYS_AWAY'] = str_replace($replacements, "", $arr[$powerplaysAwayIndex]);
+        if (count($nextMatches) > 2) {
+            $res['powerplays_used_away'] = $nextMatches[1];
+            $res['powerplays_received_away'] = $nextMatches[2];
+        }
 
-        $powerplaysHomeIndex = $this->getNext($powerplaysAwayIndex + 1, $arr, '/\d[\\\\\/]+\d/');
+        $nextMatches = [];
+        $powerplaysHomeIndex = $this->getNext($powerplaysAwayIndex + 1, $arr, '/(\d)[\\\\\/]+(\d)/', $nextMatches);
         if ($powerplaysHomeIndex === false) {
             return $res;
         }
-        $res['POWERPLAYS_HOME'] = str_replace($replacements, "", $arr[$powerplaysHomeIndex]);
+        if (count($nextMatches) > 2) {
+            $res['powerplays_used_home'] = $nextMatches[1];
+            $res['powerplays_received_home'] = $nextMatches[2];
+        }
 
-        $awayPowerplayMinutesIndex = $this->getNext($powerplaysHomeIndex + 1, $arr, '/\d{2}:\d{2}/');
+        $awayPowerplayMinutesIndex = $this->getNext($powerplaysHomeIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($awayPowerplayMinutesIndex === false) {
             return $res;
         }
-        $res['POWERPLAY_MINUTES_AWAY'] = str_replace($replacements, "", $arr[$awayPowerplayMinutesIndex]);
+        $res['powerplay_time_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$awayPowerplayMinutesIndex]));
 
-        $homePowerplayMinutesIndex = $this->getNext($awayPowerplayMinutesIndex + 1, $arr, '/\d{2}:\d{2}/');
+        $homePowerplayMinutesIndex = $this->getNext($awayPowerplayMinutesIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($homePowerplayMinutesIndex === false) {
             return $res;
         }
-        $res['POWERPLAY_MINUTES_HOME'] = str_replace($replacements, "", $arr[$homePowerplayMinutesIndex]);
+        $res['powerplay_time_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$homePowerplayMinutesIndex]));
 
-        $shortHandedGoalsAwayIndex = $this->getNext($homePowerplayMinutesIndex + 1, $arr, '/\d+/');
+        $shortHandedGoalsAwayIndex = $this->getNext($homePowerplayMinutesIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($shortHandedGoalsAwayIndex === false) {
             return $res;
         }
-        $res['SHORTHANDED_GOALS_AWAY'] = str_replace($replacements, "", $arr[$shortHandedGoalsAwayIndex]);
+        $res['shorthanded_goals_away'] = str_replace($replacements, "", $arr[$shortHandedGoalsAwayIndex]);
 
-        $shortHandedGoalsHomeIndex = $this->getNext($shortHandedGoalsAwayIndex + 1, $arr, '/\d+/');
+        $shortHandedGoalsHomeIndex = $this->getNext($shortHandedGoalsAwayIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($shortHandedGoalsHomeIndex === false) {
             return $res;
         }
-        $res['SHORTHANDED_GOALS_HOME'] = str_replace($replacements, "", $arr[$shortHandedGoalsHomeIndex]);
+        $res['shorthanded_goals_home'] = str_replace($replacements, "", $arr[$shortHandedGoalsHomeIndex]);
+
+        $detectionPercentage = round((count($res) - 1) / 24 * 100, 2);
+        $res['detection_percentage'] = min($detectionPercentage, 100);
 
         return $res;
     }
@@ -319,10 +351,10 @@ class VisionController extends Controller
      * @param $pattern
      * @return bool|int
      */
-    private function getNext(int $startIndex, array $arr, $pattern): bool|int
+    private function getNext(int $startIndex, array $arr, $pattern, &$matches): bool|int
     {
         for ($i = $startIndex; $i < count($arr); $i++) {
-            if (preg_match($pattern, $arr[$i])) {
+            if (preg_match($pattern, $arr[$i], $matches)) {
                 return $i;
             }
         }

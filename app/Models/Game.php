@@ -14,6 +14,11 @@ class Game extends Model
 {
     use HasFactory, AsSource, Filterable, Attachable, VersionableTrait;
 
+    protected $guarded = [
+        'created_at',
+        'updated_at'
+    ];
+
     /**
      * ORCHID setting to allow HTTP sorting on desired columns
      *
@@ -28,16 +33,6 @@ class Game extends Model
         'goals_away',
         'created_at',
         'updated_at'
-    ];
-
-    /**
-     * ORCHID setting to allow HTTP filtering on desired columns
-     *
-     * @var string[]
-     */
-    protected $allowedFilters = [
-        'home_team_id',
-        'away_team_id',
     ];
 
     public function home_user(): BelongsTo

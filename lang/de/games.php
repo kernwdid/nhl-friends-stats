@@ -32,4 +32,8 @@ return [
     'powerplay_time_away_in_seconds' => 'Powerplay Minuten Auswärts',
     'shorthanded_goals_home' => 'Tore in Unterzahl Heim',
     'shorthanded_goals_away' => 'Tore in Unterzahl Auswärts',
+    'upload_result' => 'Resultat hochladen',
+    'detection_percentage' => 'Resultat-Erkennung in %',
+    'upload_limit' => 'Pro Monat können alle Spieler zusammen maximal 750 Resultate analysieren.',
+    'save' => 'Spiel erstellen'
 ];
