@@ -36,7 +36,7 @@ class VisionScreen extends Screen
      */
     public function name(): ?string
     {
-        return 'Vision';
+        return __('games.upload_result');
     }
 
     /**
