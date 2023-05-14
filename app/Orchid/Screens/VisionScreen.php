@@ -54,7 +54,10 @@ class VisionScreen extends Screen
 
     public function saveGame(Request $request): Redirector|Application|RedirectResponse
     {
-        $data = $request->all();
+        $data = $request->validate([
+            "*" => "required",
+            "game_result" => "exclude"
+        ]);
 
         if (array_key_exists('game_result', $data)) {
             unset($data['game_result']);
@@ -89,7 +92,8 @@ class VisionScreen extends Screen
     }
 
 
-    public function processResult(int $attachmentId) {
+    public function processResult(int $attachmentId)
+    {
 
         $attachment = Attachment::find($attachmentId);
 

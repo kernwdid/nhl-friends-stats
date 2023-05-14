@@ -52,7 +52,7 @@ class ResultUploadListener extends Listener
         $fields = [];
         $totalAttachments = Attachment::where('created_at', Carbon::now()->subMonth()->toDateTimeString())->count();
 
-        if ($totalAttachments < 750) {
+        if ($totalAttachments < config('app.gc_ocr_analyzing_limit')) {
             $fields = [Cropper::make('game_result')
                 ->help(__('games.upload_limit'))
                 ->title(__('games.upload_result'))

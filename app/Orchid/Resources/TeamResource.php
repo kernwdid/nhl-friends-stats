@@ -33,6 +33,10 @@ class TeamResource extends Resource
                 ->title('Name')
                 ->required()
                 ->placeholder(__('teams.name_placeholder')),
+            Input::make('abbreviation')
+            ->title(__('teams.abbreviation'))
+            ->maxlength(3)
+            ->minlength(3),
             Select::make('division')
                 ->required()
                 ->fromModel(Team::class, 'division', 'division')

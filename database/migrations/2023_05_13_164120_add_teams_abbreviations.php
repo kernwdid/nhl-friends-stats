@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('teams', function (Blueprint $table) {
-            $table->char('abbreviation', 3);
+            $table->char('abbreviation', 3)->nullable();
         });
     }
 

@@ -193,7 +193,7 @@ class VisionController extends Controller
         $index = 0;
 
         $nextMatches = [];
-        $foundMatches = preg_match('/(\d)\s?-\s?(\d)/', $arr[$index], $nextMatches);
+        $foundMatches = preg_match('/(\d+)\s?-\s?(\d+)/', $arr[$index], $nextMatches);
         if ($foundMatches) {
             if (count($nextMatches) > 1) {
                 $res['goals_away'] = $nextMatches[1];
@@ -294,7 +294,7 @@ class VisionController extends Controller
         $res['penalty_minutes_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$homePenaltyMinutesIndex]));
 
         $nextMatches = [];
-        $powerplaysAwayIndex = $this->getNext($homePenaltyMinutesIndex + 1, $arr, '/(\d)[\\\\\/]+(\d)/', $nextMatches);
+        $powerplaysAwayIndex = $this->getNext($homePenaltyMinutesIndex + 1, $arr, '/(\d+)[\\\\\/]+(\d+)/', $nextMatches);
         if ($powerplaysAwayIndex === false) {
             return $res;
         }
@@ -304,7 +304,7 @@ class VisionController extends Controller
         }
 
         $nextMatches = [];
-        $powerplaysHomeIndex = $this->getNext($powerplaysAwayIndex + 1, $arr, '/(\d)[\\\\\/]+(\d)/', $nextMatches);
+        $powerplaysHomeIndex = $this->getNext($powerplaysAwayIndex + 1, $arr, '/(\d+)[\\\\\/]+(\d+)/', $nextMatches);
         if ($powerplaysHomeIndex === false) {
             return $res;
         }

@@ -37,20 +37,16 @@ In addition, the application provides:
 - Role and user management
 - Login & Authentication
 - CRUD of games
+- Upload game results and processing with  Google Vision API OCR
 - CRUD of teams and their strengths
 - Language support for german and english (not 100%)
 
 ## OCR
 
-Instead of typing in all the stats manually, In the future I plan to automatically detect stats by taking a picture of the result screen like this:
+To use the upload result feature with the Google Vision API OCR processing, 
+you need a Google service account and place the credentials in the root folder with the name `gc_config.json`.
 
-![Example Picture](/example.jpeg)
+Since it is free to use OCR up to 1000 images per month, we stop the upload feature by 750 pictures as it can get very costly.
+If you want to change it, you can set the env variable `GC_OCR_ANALYZING_LIMIT` to your liking.
 
-### First tests
-
-Best results until now with:
-
-```bash
-convert test_file.jpeg -colorspace gray -contrast-stretch 0x50% -despeckle -deskew 40% -unsharp 0x1 -median 3 output.png
-tesseract -l eng output.png - nobatch digits
-```
+For the stats identification I used clustering and similarity algorithms combined with regular expressions.
