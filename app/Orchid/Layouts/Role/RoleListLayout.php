@@ -18,7 +18,7 @@ class RoleListLayout extends Table
     public $target = 'roles';
 
     /**
-     * @return TD[]
+     * @return array<TD>
      */
     public function columns(): array
     {

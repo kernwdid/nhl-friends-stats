@@ -56,7 +56,7 @@ class UserProfileScreen extends Screen
     /**
      * The screen's action buttons.
      *
-     * @return Action[]
+     * @return iterable<Action>
      */
     public function commandBar(): iterable
     {
@@ -64,7 +64,7 @@ class UserProfileScreen extends Screen
     }
 
     /**
-     * @return \Orchid\Screen\Layout[]
+     * @return iterable<\Orchid\Screen\Layout>
      */
     public function layout(): iterable
     {
@@ -97,7 +97,7 @@ class UserProfileScreen extends Screen
     public function save(Request $request): void
     {
         $request->validate([
-            'user.name'  => 'required|string',
+            'user.name' => 'required|string',
             'user.email' => [
                 'required',
                 Rule::unique(User::class, 'email')->ignore($request->user()),
@@ -119,7 +119,7 @@ class UserProfileScreen extends Screen
         $guard = config('platform.guard', 'web');
         $request->validate([
             'old_password' => 'required|current_password:'.$guard,
-            'password'     => 'required|confirmed',
+            'password' => 'required|confirmed',
         ]);
 
         tap($request->user(), function ($user) use ($request) {

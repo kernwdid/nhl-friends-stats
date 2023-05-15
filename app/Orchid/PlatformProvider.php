@@ -22,7 +22,7 @@ class PlatformProvider extends OrchidServiceProvider
     }
 
     /**
-     * @return Menu[]
+     * @return array<Menu>
      */
     public function registerMainMenu(): array
     {
@@ -35,7 +35,7 @@ class PlatformProvider extends OrchidServiceProvider
 
             Menu::make(__(__('games.upload_result')))
                 ->icon('picture')->permission('resource.games')
-            ->route('platform.vision.index'),
+                ->route('platform.vision.index'),
             Menu::make(__('games.title'))
                 ->icon('game-controller')
                 ->permission('resource.games')
@@ -60,7 +60,7 @@ class PlatformProvider extends OrchidServiceProvider
     }
 
     /**
-     * @return Menu[]
+     * @return array<Menu>
      */
     public function registerProfileMenu(): array
     {
@@ -72,7 +72,7 @@ class PlatformProvider extends OrchidServiceProvider
     }
 
     /**
-     * @return ItemPermission[]
+     * @return array<ItemPermission>
      */
     public function registerPermissions(): array
     {

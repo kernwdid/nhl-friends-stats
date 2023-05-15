@@ -42,21 +42,21 @@ class VisionScreen extends Screen
     /**
      * The screen's action buttons.
      *
-     * @return Action[]
+     * @return iterable<Action>
      */
     public function commandBar(): iterable
     {
         return [
             Button::make(__('games.save'))->icon('plus')
-                ->method('saveGame')
+                ->method('saveGame'),
         ];
     }
 
     public function saveGame(Request $request): Redirector|Application|RedirectResponse
     {
         $data = $request->validate([
-            "*" => "required",
-            "game_result" => "exclude"
+            '*' => 'required',
+            'game_result' => 'exclude',
         ]);
 
         if (array_key_exists('game_result', $data)) {
@@ -69,36 +69,33 @@ class VisionScreen extends Screen
         $data['pass_percentage_home'] = floatval($data['pass_percentage_home']);
         $data['pass_percentage_away'] = floatval($data['pass_percentage_away']);
 
-        if (array_key_exists('penalty_minutes_home_in_seconds', $data) && $data['penalty_minutes_home_in_seconds'] != null) {
+        if (array_key_exists('penalty_minutes_home_in_seconds', $data) && $data['penalty_minutes_home_in_seconds'] !== null) {
             $data['penalty_minutes_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($data['penalty_minutes_home_in_seconds']);
         }
 
-        if (array_key_exists('penalty_minutes_away_in_seconds', $data) && $data['penalty_minutes_away_in_seconds'] != null) {
+        if (array_key_exists('penalty_minutes_away_in_seconds', $data) && $data['penalty_minutes_away_in_seconds'] !== null) {
             $data['penalty_minutes_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($data['penalty_minutes_away_in_seconds']);
         }
 
-        if (array_key_exists('powerplay_time_home_in_seconds', $data) && $data['powerplay_time_home_in_seconds'] != null) {
+        if (array_key_exists('powerplay_time_home_in_seconds', $data) && $data['powerplay_time_home_in_seconds'] !== null) {
             $data['powerplay_time_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($data['powerplay_time_home_in_seconds']);
         }
 
-        if (array_key_exists('powerplay_time_away_in_seconds', $data) && $data['powerplay_time_away_in_seconds'] != null) {
+        if (array_key_exists('powerplay_time_away_in_seconds', $data) && $data['powerplay_time_away_in_seconds'] !== null) {
             $data['powerplay_time_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($data['powerplay_time_away_in_seconds']);
         }
 
         $game = new Game($data);
         $game->save();
-        return redirect("/");
-
+        return redirect('/');
     }
-
 
     public function processResult(int $attachmentId)
     {
-
         $attachment = Attachment::find($attachmentId);
 
         if ($attachment) {
-            $path = $attachment->path . $attachment->name . "." . $attachment->extension;
+            $path = $attachment->path . $attachment->name . '.' . $attachment->extension;
             $fileContent = Storage::disk($attachment->disk)->get($path);
 
             $visionController = new VisionController();
@@ -114,12 +111,12 @@ class VisionScreen extends Screen
     /**
      * The screen's layout elements.
      *
-     * @return Layout[]|string[]
+     * @return array<Layout>|array<string>
      */
     public function layout(): iterable
     {
         return [
-            ResultUploadListener::class
+            ResultUploadListener::class,
         ];
     }
 }

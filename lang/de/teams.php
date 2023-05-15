@@ -1,6 +1,5 @@
 <?php
 
-
 return [
     'title' => 'Teams',
     'add' => 'Team hinzufügen',
@@ -9,5 +8,5 @@ return [
     'defense_rating' => 'Defensive',
     'goaltender_rating' => 'Torhüter',
     'name_placeholder' => 'Name der NHL Mannschaft',
-    'abbreviation' => 'Kürzel'
+    'abbreviation' => 'Kürzel',
 ];

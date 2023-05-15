@@ -1,6 +1,5 @@
 <?php
 
-
 return [
     'total' => 'Total Spiele',
     'title' => 'Spiele',
@@ -35,5 +34,5 @@ return [
     'upload_result' => 'Resultat hochladen',
     'detection_percentage' => 'Resultat-Erkennung in %',
     'upload_limit' => 'Pro Monat können alle Spieler zusammen maximal 750 Resultate analysieren.',
-    'save' => 'Spiel erstellen'
+    'save' => 'Spiel erstellen',
 ];

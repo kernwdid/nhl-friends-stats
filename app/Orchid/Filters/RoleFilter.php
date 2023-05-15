@@ -43,7 +43,7 @@ class RoleFilter extends Filter
     }
 
     /**
-     * @return Field[]
+     * @return array<Field>
      */
     public function display(): array
     {

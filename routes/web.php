@@ -1,8 +1,5 @@
 <?php
 
-use App\Http\Controllers\VisionController;
-use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes

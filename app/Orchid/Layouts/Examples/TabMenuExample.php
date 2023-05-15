@@ -10,7 +10,7 @@ class TabMenuExample extends TabMenu
     /**
      * Get the menu elements to be displayed.
      *
-     * @return Menu[]
+     * @return iterable<Menu>
      */
     protected function navigations(): iterable
     {

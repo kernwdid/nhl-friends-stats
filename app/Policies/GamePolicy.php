@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Orchid\Platform\Models\Role;
 
 class GamePolicy
 {
@@ -22,7 +21,7 @@ class GamePolicy
 
     public function delete(User $user)
     {
-            return $user->id == 1;
+        return $user->id === 1;
     }
 
     public function update()
@@ -34,6 +33,4 @@ class GamePolicy
     {
         return true;
     }
-
-
 }

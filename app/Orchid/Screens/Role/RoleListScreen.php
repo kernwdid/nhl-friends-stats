@@ -57,7 +57,7 @@ class RoleListScreen extends Screen
     /**
      * The screen's action buttons.
      *
-     * @return Action[]
+     * @return iterable<Action>
      */
     public function commandBar(): iterable
     {
@@ -71,7 +71,7 @@ class RoleListScreen extends Screen
     /**
      * The screen's layout elements.
      *
-     * @return string[]|\Orchid\Screen\Layout[]
+     * @return array<string>|array<\Orchid\Screen\Layout>
      */
     public function layout(): iterable
     {

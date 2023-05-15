@@ -20,17 +20,17 @@ class ResultUploadListener extends Listener
     /**
      * List of field names for which values will be joined with targets' upon trigger.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $extraVars = [];
 
     /**
      * List of field names for which values will be listened.
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $targets = [
-        'game_result'
+        'game_result',
     ];
 
     /**
@@ -45,7 +45,7 @@ class ResultUploadListener extends Listener
     protected $asyncMethod = 'processResult';
 
     /**
-     * @return Layout[]
+     * @return iterable<Layout>
      */
     protected function layouts(): iterable
     {
@@ -105,15 +105,13 @@ class ResultUploadListener extends Listener
                 ->type('number')
                 ->max(50)
                 ->min(0)
-                ->required()
-            ,
+                ->required(),
             Input::make('goals_away')
                 ->min(0)
                 ->max(50)
                 ->title(__('games.goals_away'))
                 ->type('number')
-                ->required()
-            ,
+                ->required(),
             Input::make('shots_home')
                 ->min(0)
                 ->required()
@@ -122,8 +120,7 @@ class ResultUploadListener extends Listener
                 ->min(0)
                 ->required()
                 ->title(__('games.shots_away'))
-                ->type('number')
-            ,
+                ->type('number'),
             Input::make('hits_home')
                 ->required()
                 ->type('number')
@@ -207,7 +204,7 @@ class ResultUploadListener extends Listener
             Input::make('shorthanded_goals_away')
                 ->type('number')
                 ->required()
-                ->title(__('games.shorthanded_goals_away'))
+                ->title(__('games.shorthanded_goals_away')),
         ]);
         return [
             Layout::rows($fields),

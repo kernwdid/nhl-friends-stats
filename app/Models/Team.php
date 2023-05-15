@@ -12,10 +12,12 @@ class Team extends Model
 {
     use HasFactory, AsSource, Filterable, Attachable;
 
+    public const DIVISIONS = ['ATLANTIC', 'PACIFIC', 'CENTRAL', 'METROPOLITAN', 'NONE'];
+
     /**
      * ORCHID setting to allow HTTP sorting on desired columns
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $allowedSorts = [
         'name',
@@ -25,18 +27,16 @@ class Team extends Model
         'defense-rating',
         'goaltender_rating',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     /**
      * ORCHID setting to allow HTTP filtering on desired columns
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $allowedFilters = [
         'name',
-        'division'
+        'division',
     ];
-
-    const DIVISIONS = ['ATLANTIC', 'PACIFIC', 'CENTRAL', 'METROPOLITAN', 'NONE'];
 }

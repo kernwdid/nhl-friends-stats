@@ -9,20 +9,19 @@ use Google\Cloud\Vision\V1\ImageAnnotatorClient;
 
 class VisionController extends Controller
 {
-
     public function getNHLResultFromImage(string $imageContent): array|string
     {
         try {
-            putenv("GOOGLE_APPLICATION_CREDENTIALS=" . base_path("gc_config.json"));
+            putenv('GOOGLE_APPLICATION_CREDENTIALS=' . base_path('gc_config.json'));
 
             $result = [];
 
-            if ($imageContent != "") {
+            if ($imageContent !== '') {
                 $imageAnnotator = new ImageAnnotatorClient();
                 $response = $imageAnnotator->textDetection($imageContent);
                 $texts = $response->getTextAnnotations();
                 foreach ($texts as $key => $text) {
-                    if ($key == 0) {
+                    if ($key === 0) {
                         continue;
                     }
                     $entry = [];
@@ -38,15 +37,15 @@ class VisionController extends Controller
 
                 $threshold = $this->calculateThresholdValue($result, 3);
 
-                $leftCluster = array();
-                $middleCluster = array();
-                $rightCluster = array();
+                $leftCluster = [];
+                $middleCluster = [];
+                $rightCluster = [];
 
                 foreach ($result as $coord) {
                     $avg = ($coord[0][0] + $coord[1][0] + $coord[2][0] + $coord[3][0]) / 4;
                     if ($avg < $threshold) {
                         $leftCluster[] = $coord;
-                    } else if ($avg < ($threshold * 2)) {
+                    } elseif ($avg < $threshold * 2) {
                         $middleCluster[] = $coord;
                     } else {
                         $rightCluster[] = $coord;
@@ -70,25 +69,28 @@ class VisionController extends Controller
                 return $this->fieldPatternRecognition($mergeSides);
             }
         } catch (GoogleException $googleException) {
-            return "Received exception: " . $googleException->getMessage();
+            return 'Received exception: ' . $googleException->getMessage();
         }
 
-        return "Something went wrong";
+        return 'Something went wrong';
     }
 
     /**
      * Calculates threshold value according to X axis
+     *
      * @param array $arr
      * @param int $k Number of parts
+     *
      * @return float
      */
-    private function calculateThresholdValue(array $arr, int $k): float {
+    private function calculateThresholdValue(array $arr, int $k): float
+    {
         $threshold = 500;
 
         $min = null;
         $max = null;
         foreach ($arr as $r) {
-            if ($min == null && $max == null) {
+            if ($min === null && $max === null) {
                 $min = $r[0][0];
                 $max = $r[0][0];
             }
@@ -101,18 +103,18 @@ class VisionController extends Controller
                 }
             }
         }
-        if ($min != null && $max != null) {
+        if ($min !== null && $max !== null) {
             $threshold = ($max + $min) / $k;
         }
         return $threshold;
     }
-
 
     /**
      * Returns the order similarity between two arrays
      *
      * @param $a
      * @param $b
+     *
      * @return float
      */
     private function getOrderSimilarity($a, $b): float
@@ -120,7 +122,7 @@ class VisionController extends Controller
         $numMatches = 0;
         $n = count($a);
         for ($i = 0; $i < $n; $i++) {
-            if ($a[$i] == $b[$i]) {
+            if ($a[$i] === $b[$i]) {
                 $numMatches++;
             }
         }
@@ -132,10 +134,10 @@ class VisionController extends Controller
      * the most similar amongst each other
      *
      * @param array $result
+     *
      * @return array
      */
-    private
-    function mostLikelyOrder(array $result): array
+    private function mostLikelyOrder(array $result): array
     {
         $sorts = [];
 
@@ -164,11 +166,11 @@ class VisionController extends Controller
         });
         $sorts[] = array_column($x4y4Sort, 4);
 
-        $similarityMatrix = array();
+        $similarityMatrix = [];
         foreach ($sorts as $i => $arr1) {
-            $row = array();
+            $row = [];
             foreach ($sorts as $j => $arr2) {
-                if ($i == $j) {
+                if ($i === $j) {
                     $row[] = 1.0;  // similarity score of an array with itself is 1.0
                 } else {
                     $row[] = $this->getOrderSimilarity($arr1, $arr2);
@@ -186,10 +188,10 @@ class VisionController extends Controller
     private function fieldPatternRecognition(array $arr): array
     {
         $res = [
-            'view_result' => implode(',', $arr)
+            'view_result' => implode(',', $arr),
         ];
         $elements = count($arr);
-        $replacements = ["%", "\n", "\r", "\r\n", " "];
+        $replacements = ['%', "\n", "\r", "\r\n", ' '];
         $index = 0;
 
         $nextMatches = [];
@@ -197,7 +199,6 @@ class VisionController extends Controller
         if ($foundMatches) {
             if (count($nextMatches) > 1) {
                 $res['goals_away'] = $nextMatches[1];
-
             }
             if (count($nextMatches) > 2) {
                 $res['goals_home'] = $nextMatches[2];
@@ -205,7 +206,7 @@ class VisionController extends Controller
         }
 
         if ($index < $elements && preg_match('/[A-Z]{3}/', $arr[$index + 1])) {
-            $abbreviation = str_replace($replacements, "", $arr[$index + 1]);
+            $abbreviation = str_replace($replacements, '', $arr[$index + 1]);
             $team = Team::where('abbreviation', $abbreviation)->first();
             if ($team) {
                 $res['away_team_id'] = $team->id;
@@ -213,7 +214,7 @@ class VisionController extends Controller
         }
 
         if ($index + 1 < $elements && preg_match('/[A-Z]{3}/', $arr[$index + 2])) {
-            $abbreviation = str_replace($replacements, "", $arr[$index + 2]);
+            $abbreviation = str_replace($replacements, '', $arr[$index + 2]);
             $team = Team::where('abbreviation', $abbreviation)->first();
             if ($team) {
                 $res['home_team_id'] = $team->id;
@@ -221,40 +222,39 @@ class VisionController extends Controller
         }
 
         if ($index + 2 < $elements && preg_match('/\d+/', $arr[$index + 3])) {
-            $res['shots_away'] = str_replace($replacements, "", $arr[$index + 3]);
+            $res['shots_away'] = str_replace($replacements, '', $arr[$index + 3]);
         }
-
 
         $shotsHomeIndex = $this->getNext($index + 4, $arr, '/\d+/', $nextMatches);
         if ($shotsHomeIndex === false) {
             return $res;
         }
-        $res['shots_home'] = str_replace($replacements, "", $arr[$shotsHomeIndex]);
+        $res['shots_home'] = str_replace($replacements, '', $arr[$shotsHomeIndex]);
 
         $hitsAwayIndex = $this->getNext($shotsHomeIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($hitsAwayIndex === false) {
             return $res;
         }
-        $res['hits_away'] = str_replace($replacements, "", $arr[$hitsAwayIndex]);
+        $res['hits_away'] = str_replace($replacements, '', $arr[$hitsAwayIndex]);
 
         $hitsHomeIndex = $this->getNext($hitsAwayIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($hitsHomeIndex === false) {
             return $res;
         }
-        $res['hits_home'] = str_replace($replacements, "", $arr[$hitsHomeIndex], $nextMatches);
+        $res['hits_home'] = str_replace($replacements, '', $arr[$hitsHomeIndex], $nextMatches);
 
         $awayTimeOnAttackIndex = $this->getNext($hitsHomeIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($awayTimeOnAttackIndex === false) {
             return $res;
         }
-        $awayMinutesAndSeconds = str_replace($replacements, "", $arr[$awayTimeOnAttackIndex]);
+        $awayMinutesAndSeconds = str_replace($replacements, '', $arr[$awayTimeOnAttackIndex]);
         $res['time_in_offense_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($awayMinutesAndSeconds);
 
         $homeTimeOnAttackIndex = $this->getNext($awayTimeOnAttackIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($homeTimeOnAttackIndex === false) {
             return $res;
         }
-        $homeMinutesAndSeconds = str_replace($replacements, "", $arr[$homeTimeOnAttackIndex]);
+        $homeMinutesAndSeconds = str_replace($replacements, '', $arr[$homeTimeOnAttackIndex]);
         $res['time_in_offense_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($homeMinutesAndSeconds);
 
         $passPercentageAwayIndex = $this->getNext($homeTimeOnAttackIndex + 1, $arr, '/\d{2}(?:\.\d)?/', $nextMatches);
@@ -273,25 +273,25 @@ class VisionController extends Controller
         if ($faceoffsAwayIndex === false) {
             return $res;
         }
-        $res['faceoffs_won_away'] = str_replace($replacements, "", $arr[$faceoffsAwayIndex]);
+        $res['faceoffs_won_away'] = str_replace($replacements, '', $arr[$faceoffsAwayIndex]);
 
         $faceoffsHomeIndex = $this->getNext($faceoffsAwayIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($faceoffsHomeIndex === false) {
             return $res;
         }
-        $res['faceoffs_won_home'] = str_replace($replacements, "", $arr[$faceoffsHomeIndex]);
+        $res['faceoffs_won_home'] = str_replace($replacements, '', $arr[$faceoffsHomeIndex]);
 
-        $awayPenaltyMinutesIndex = $this->getNext($faceoffsHomeIndex + 1, $arr, '/\d{2}:\d{2}/',$nextMatches);
+        $awayPenaltyMinutesIndex = $this->getNext($faceoffsHomeIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($awayPenaltyMinutesIndex === false) {
             return $res;
         }
-        $res['penalty_minutes_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$awayPenaltyMinutesIndex]));
+        $res['penalty_minutes_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, '', $arr[$awayPenaltyMinutesIndex]));
 
         $homePenaltyMinutesIndex = $this->getNext($awayPenaltyMinutesIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($homePenaltyMinutesIndex === false) {
             return $res;
         }
-        $res['penalty_minutes_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$homePenaltyMinutesIndex]));
+        $res['penalty_minutes_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, '', $arr[$homePenaltyMinutesIndex]));
 
         $nextMatches = [];
         $powerplaysAwayIndex = $this->getNext($homePenaltyMinutesIndex + 1, $arr, '/(\d+)[\\\\\/]+(\d+)/', $nextMatches);
@@ -317,25 +317,25 @@ class VisionController extends Controller
         if ($awayPowerplayMinutesIndex === false) {
             return $res;
         }
-        $res['powerplay_time_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$awayPowerplayMinutesIndex]));
+        $res['powerplay_time_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, '', $arr[$awayPowerplayMinutesIndex]));
 
         $homePowerplayMinutesIndex = $this->getNext($awayPowerplayMinutesIndex + 1, $arr, '/\d{2}:\d{2}/', $nextMatches);
         if ($homePowerplayMinutesIndex === false) {
             return $res;
         }
-        $res['powerplay_time_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, "", $arr[$homePowerplayMinutesIndex]));
+        $res['powerplay_time_home_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds(str_replace($replacements, '', $arr[$homePowerplayMinutesIndex]));
 
         $shortHandedGoalsAwayIndex = $this->getNext($homePowerplayMinutesIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($shortHandedGoalsAwayIndex === false) {
             return $res;
         }
-        $res['shorthanded_goals_away'] = str_replace($replacements, "", $arr[$shortHandedGoalsAwayIndex]);
+        $res['shorthanded_goals_away'] = str_replace($replacements, '', $arr[$shortHandedGoalsAwayIndex]);
 
         $shortHandedGoalsHomeIndex = $this->getNext($shortHandedGoalsAwayIndex + 1, $arr, '/\d+/', $nextMatches);
         if ($shortHandedGoalsHomeIndex === false) {
             return $res;
         }
-        $res['shorthanded_goals_home'] = str_replace($replacements, "", $arr[$shortHandedGoalsHomeIndex]);
+        $res['shorthanded_goals_home'] = str_replace($replacements, '', $arr[$shortHandedGoalsHomeIndex]);
 
         $detectionPercentage = round((count($res) - 1) / 24 * 100, 2);
         $res['detection_percentage'] = min($detectionPercentage, 100);
@@ -349,6 +349,7 @@ class VisionController extends Controller
      * @param int $startIndex
      * @param array $arr
      * @param $pattern
+     *
      * @return bool|int
      */
     private function getNext(int $startIndex, array $arr, $pattern, &$matches): bool|int
