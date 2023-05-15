@@ -44,44 +44,49 @@ class GameResource extends Resource
         };
 
         return [
-            Select::make('home_user_id')
-                ->required()
-                ->empty(__('general.select'), '')
-                ->fromModel($users, 'name', 'id')
-                ->title(__('games.home')),
             Select::make('away_user_id')
                 ->required()
                 ->empty(__('general.select'), '')
                 ->fromModel($users, 'name', 'id')
                 ->title(__('games.away')),
-            Select::make('home_team_id')
-                ->empty(__('general.select'), '')
+            Select::make('home_user_id')
                 ->required()
-                ->fromModel(Team::class, 'name', 'id')
-                ->title(__('games.home_team')),
+                ->empty(__('general.select'), '')
+                ->fromModel($users, 'name', 'id')
+                ->title(__('games.home')),
             Select::make('away_team_id')
                 ->required()
                 ->empty(__('general.select'), '')
                 ->fromModel(Team::class, 'name', 'id')
                 ->title(__('games.away_team')),
+            Select::make('home_team_id')
+                ->empty(__('general.select'), '')
+                ->required()
+                ->fromModel(Team::class, 'name', 'id')
+                ->title(__('games.home_team')),
+            Input::make('goals_away')
+                ->min(0)
+                ->max(50)
+                ->title(__('games.goals_away'))
+                ->type('number')->required(),
             Input::make('goals_home')
                 ->title(__('games.goals_home'))
                 ->type('number')
                 ->max(50)
                 ->min(0)
                 ->required(),
-            Input::make('goals_away')
-                ->min(0)
-                ->max(50)
-                ->title(__('games.goals_away'))
-                ->type('number')->required(),
-            Input::make('shots_home')
-                ->min(0)
-                ->title(__('games.shots_home'))->type('number')->required(),
             Input::make('shots_away')
                 ->min(0)
                 ->title(__('games.shots_away'))
                 ->type('number')
+                ->required(),
+            Input::make('shots_home')
+                ->min(0)
+                ->title(__('games.shots_home'))->type('number')->required(),
+            Input::make('time_in_offense_away_in_seconds')
+                ->title(__('games.time_in_offense_away_in_seconds'))
+                ->addBeforeRender($parseSeconds)
+                ->mask('99:99')
                 ->required(),
             Input::make('time_in_offense_home_in_seconds')
                 ->title(__('games.time_in_offense_home_in_seconds'))
@@ -89,55 +94,74 @@ class GameResource extends Resource
                 ->addBeforeRender($parseSeconds)
                 ->mask('99:99')
                 ->runBeforeRender(),
-            Input::make('time_in_offense_away_in_seconds')
-                ->title(__('games.time_in_offense_away_in_seconds'))
-                ->addBeforeRender($parseSeconds)
-                ->mask('99:99')
+            Input::make('hits_away')
+                ->type('number')
+                ->title(__('games.hits_away'))
                 ->required(),
-            Input::make('hits_home')->type('number')->title(__('games.hits_home'))->required(),
-            Input::make('hits_away')->type('number')->title(__('games.hits_away'))->required(),
-            Input::make('pass_percentage_home')->step(0.1)
-                ->min(0)->max(100)->type('number')
-                ->title(__('games.pass_percentage_home'))->required(),
-            Input::make('pass_percentage_away')->step(0.1)->min(0)->max(100)->type('number')->title(__('games.pass_percentage_away'))->required(),
-            Input::make('faceoffs_won_home')->type('number')->title(__('games.faceoffs_won_home'))->required(),
-            Input::make('faceoffs_won_away')->type('number')->title(__('games.faceoffs_won_away'))->required(),
+            Input::make('hits_home')
+                ->type('number')
+                ->title(__('games.hits_home'))
+                ->required(),
+            Input::make('pass_percentage_away')
+                ->step(0.1)
+                ->min(0)
+                ->max(100)
+                ->type('number')
+                ->title(__('games.pass_percentage_away'))
+                ->required(),
+            Input::make('pass_percentage_home')
+                ->step(0.1)
+                ->min(0)
+                ->max(100)
+                ->type('number')
+                ->title(__('games.pass_percentage_home'))
+                ->required(),
+            Input::make('faceoffs_won_away')
+                ->type('number')
+                ->title(__('games.faceoffs_won_away'))
+                ->required(),
+            Input::make('faceoffs_won_home')
+                ->type('number')
+                ->title(__('games.faceoffs_won_home'))
+                ->required(),
+            Input::make('penalty_minutes_away_in_seconds')
+                ->addBeforeRender($parseSeconds)
+                ->required()
+                ->mask('99:99')
+                ->title(__('games.penalty_minutes_away_in_seconds')),
             Input::make('penalty_minutes_home_in_seconds')
                 ->addBeforeRender($parseSeconds)
                 ->mask('99:99')
                 ->required()
                 ->title(__('games.penalty_minutes_home_in_seconds')),
-            Input::make('penalty_minutes_away_in_seconds')->addBeforeRender($parseSeconds)
-                ->required()
-                ->mask('99:99')->title(__('games.penalty_minutes_away_in_seconds')),
-            Input::make('powerplays_used_home')
-                ->required()
-                ->type('number')->title(__('games.powerplays_used_home')),
             Input::make('powerplays_used_away')
                 ->required()
                 ->type('number')->title(__('games.powerplays_used_away')),
-            Input::make('powerplays_received_home')
+            Input::make('powerplays_used_home')
                 ->required()
-                ->type('number')->title(__('games.powerplays_received_home')),
+                ->type('number')->title(__('games.powerplays_used_home')),
             Input::make('powerplays_received_away')
                 ->required()
                 ->type('number')->title(__('games.powerplays_received_away')),
-            Input::make('powerplay_time_home_in_seconds')
+            Input::make('powerplays_received_home')
                 ->required()
-                ->addBeforeRender($parseSeconds)->mask('99:99')->title(__('games.powerplay_time_home_in_seconds')),
+                ->type('number')->title(__('games.powerplays_received_home')),
             Input::make('powerplay_time_away_in_seconds')
                 ->addBeforeRender($parseSeconds)
                 ->required()
                 ->mask('99:99')
                 ->title(__('games.powerplay_time_away_in_seconds')),
-            Input::make('shorthanded_goals_home')
+            Input::make('powerplay_time_home_in_seconds')
                 ->required()
-                ->type('number')
-                ->title(__('games.shorthanded_goals_home')),
+                ->addBeforeRender($parseSeconds)->mask('99:99')->title(__('games.powerplay_time_home_in_seconds')),
             Input::make('shorthanded_goals_away')
                 ->required()
                 ->type('number')
                 ->title(__('games.shorthanded_goals_away')),
+            Input::make('shorthanded_goals_home')
+                ->required()
+                ->type('number')
+                ->title(__('games.shorthanded_goals_home')),
         ];
     }
 
