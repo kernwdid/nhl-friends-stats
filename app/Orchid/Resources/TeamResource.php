@@ -13,7 +13,6 @@ use Orchid\Screen\TD;
 
 class TeamResource extends Resource
 {
-
     /**
      * The model the resource corresponds to.
      *
@@ -33,6 +32,10 @@ class TeamResource extends Resource
                 ->title('Name')
                 ->required()
                 ->placeholder(__('teams.name_placeholder')),
+            Input::make('abbreviation')
+                ->title(__('teams.abbreviation'))
+                ->maxlength(3)
+                ->minlength(3),
             Select::make('division')
                 ->required()
                 ->fromModel(Team::class, 'division', 'division')
@@ -66,7 +69,7 @@ class TeamResource extends Resource
     /**
      * Get the columns displayed by the resource.
      *
-     * @return TD[]
+     * @return array<TD>
      */
     public function columns(): array
     {
@@ -96,12 +99,12 @@ class TeamResource extends Resource
 
             TD::make('created_at', __('general.created_at'))
                 ->render(function ($model) {
-                    return DateHelper::formatDateTime($model->created_at->toDateTimeString()) . " " . __('general.oclock');
+                    return DateHelper::formatDateTime($model->created_at->toDateTimeString()) . ' ' . __('general.oclock');
                 }),
 
             TD::make('updated_at', __('general.updated_at'))
                 ->render(function ($model) {
-                    return DateHelper::formatDateTime($model->updated_at->toDateTimeString()) . " " . __('general.oclock');
+                    return DateHelper::formatDateTime($model->updated_at->toDateTimeString()) . ' ' . __('general.oclock');
                 }),
         ];
     }
@@ -109,17 +112,21 @@ class TeamResource extends Resource
     /**
      * Get the sights displayed by the resource.
      *
-     * @return Sight[]
+     * @return array<Sight>
      */
     public function legend(): array
     {
         return [
-            Sight::make('name'),
+            Sight::make('name', __('games.home_team'))->render(function ($team) {
+                $asset = asset('logos/' . $team->name . '.svg');
+                return '<img height="25" src="' . (str_contains($team->name, 'All-Stars') ? asset('logos/nhl.svg') : $asset) . '" />' . $team->name;
+            }),
+            Sight::make('abbreviation'),
             Sight::make('division'),
             Sight::make('overall_rating', __('teams.overall_rating')),
             Sight::make('offense_rating', __('teams.offense_rating')),
             Sight::make('defense_rating', __('teams.defense_rating')),
-            Sight::make('goaltender_rating', __('teams.goaltender_rating'))
+            Sight::make('goaltender_rating', __('teams.goaltender_rating')),
         ];
     }
 
@@ -141,7 +148,7 @@ class TeamResource extends Resource
     public function filters(): array
     {
         return [
-            new DefaultSorted('name', 'asc')
+            new DefaultSorted('name', 'asc'),
         ];
     }
 }

@@ -55,7 +55,7 @@ class UserPresenter extends Presenter implements Searchable, Personable
     {
         $hash = md5(strtolower(trim($this->entity->email)));
 
-        return "https://www.gravatar.com/avatar/$hash?d=mp";
+        return "https://www.gravatar.com/avatar/{$hash}?d=mp";
     }
 
     /**
@@ -73,7 +73,7 @@ class UserPresenter extends Presenter implements Searchable, Personable
      *
      * @return Builder
      */
-    public function searchQuery(string $query = null): Builder
+    public function searchQuery(?string $query = null): Builder
     {
         return $this->entity->search($query);
     }

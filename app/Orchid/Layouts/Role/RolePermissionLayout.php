@@ -24,7 +24,7 @@ class RolePermissionLayout extends Rows
      *
      * @throws Throwable
      *
-     * @return Field[]
+     * @return array<Field>
      */
     public function fields(): array
     {

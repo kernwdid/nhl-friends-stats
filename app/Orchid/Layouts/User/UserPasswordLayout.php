@@ -14,7 +14,7 @@ class UserPasswordLayout extends Rows
     /**
      * The screen's layout elements.
      *
-     * @return Field[]
+     * @return array<Field>
      */
     public function fields(): array
     {

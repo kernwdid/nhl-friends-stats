@@ -5,19 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Mpociot\Versionable\VersionableTrait;
 use Orchid\Attachment\Attachable;
 use Orchid\Filters\Filterable;
 use Orchid\Screen\AsSource;
-use Mpociot\Versionable\VersionableTrait;
 
 class Game extends Model
 {
     use HasFactory, AsSource, Filterable, Attachable, VersionableTrait;
 
+    protected $guarded = [
+        'created_at',
+        'updated_at',
+    ];
+
     /**
      * ORCHID setting to allow HTTP sorting on desired columns
      *
-     * @var string[]
+     * @var array<string>
      */
     protected $allowedSorts = [
         'home_user_id',
@@ -27,17 +32,7 @@ class Game extends Model
         'goals_home',
         'goals_away',
         'created_at',
-        'updated_at'
-    ];
-
-    /**
-     * ORCHID setting to allow HTTP filtering on desired columns
-     *
-     * @var string[]
-     */
-    protected $allowedFilters = [
-        'home_team_id',
-        'away_team_id',
+        'updated_at',
     ];
 
     public function home_user(): BelongsTo

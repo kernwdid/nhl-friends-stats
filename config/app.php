@@ -233,4 +233,5 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 
+    'gc_ocr_analyzing_limit' => env('GC_OCR_ANALYZING_LIMIT', 750),
 ];

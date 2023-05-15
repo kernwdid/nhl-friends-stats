@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'crafted_with' => 'Erstellt mit'
+    'crafted_with' => 'Erstellt mit',
 ];

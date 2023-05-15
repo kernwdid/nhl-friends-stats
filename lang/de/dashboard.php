@@ -15,5 +15,5 @@ return [
     'total_shots' => 'Total Schüsse',
     'total_hits' => 'Total Checks',
     'goals_per_game' => 'Ø Tore pro Spiel',
-    'total_shots_for_goal' => 'Ø Schüsse für 1 Tor'
+    'total_shots_for_goal' => 'Ø Schüsse für 1 Tor',
 ];

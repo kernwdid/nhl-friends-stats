@@ -94,12 +94,13 @@ class DateHelper
         return __('activity_log.over_year');
     }
 
-    public static function minuteAndSecondFormatFromSeconds($seconds): string {
-        return gmdate(config("app.time_m_s_format"), $seconds);
+    public static function minuteAndSecondFormatFromSeconds($seconds): string
+    {
+        return gmdate(config('app.time_m_s_format'), $seconds);
     }
 
     public static function getSecondsFromMinutesAndSeconds(string $minutesAndSeconds): false|int
     {
-        return strtotime('1970-01-01 00:' . $minutesAndSeconds . " UTC");
+        return strtotime('1970-01-01 00:' . $minutesAndSeconds . ' UTC');
     }
 }

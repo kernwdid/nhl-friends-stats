@@ -22,7 +22,7 @@ class UserListLayout extends Table
     public $target = 'users';
 
     /**
-     * @return TD[]
+     * @return array<TD>
      */
     public function columns(): array
     {
