@@ -13,6 +13,7 @@ didiwein[at]hotmail.com
 
 - Total games
 - Total goals
+- Total shorthanded goals
 - Average goals per game
 - Total shots
 - Average shots for one goal
@@ -29,6 +30,8 @@ Against each player you played against the following stats are available:
 - Average checks against player
 - Average pass percentage against player
 - Average time in offense against player
+- Powerplay possibility
+- Powerplay score probability
 
 ## Content
 

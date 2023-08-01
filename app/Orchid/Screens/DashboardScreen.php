@@ -35,6 +35,11 @@ class DashboardScreen extends Screen
                 ELSE 0
             END), 0) AS goals,
             COALESCE(SUM(CASE
+                WHEN home_user_id = {$userId} THEN shorthanded_goals_home
+                WHEN away_user_id = {$userId} THEN shorthanded_goals_away
+                ELSE 0
+            END), 0) AS shorthanded_goals,
+            COALESCE(SUM(CASE
                 WHEN home_user_id = {$userId} THEN shots_home
                 WHEN away_user_id = {$userId} THEN shots_away
                 ELSE 0
@@ -52,6 +57,7 @@ class DashboardScreen extends Screen
                 'total_games' => ['value' => number_format($totalStats['games'])],
                 'total_goals' => ['value' => number_format($totalStats['goals'])],
                 'goals_per_game' => ['value' => $totalStats['goals'] ? round($totalStats['goals'] / $totalStats['games'], 2) : $totalStats['goals']],
+                'total_shorthanded_goals' => ['value' => $totalStats['shorthanded_goals'] ? round($totalStats['shorthanded_goals'], 2) : $totalStats['shorthanded_goals']],
                 'total_shots' => ['value' => number_format($totalStats['shots'])],
                 'total_hits' => ['value' => number_format($totalStats['hits'])],
                 'shots_for_goal' => ['value' => $totalStats['shots'] ? round($totalStats['shots'] / $totalStats['goals'], 2) : 0],
@@ -109,7 +115,21 @@ class DashboardScreen extends Screen
                     ROUND(AVG(CASE
                         WHEN home_user_id = {$userId} THEN pass_percentage_home
                         WHEN away_user_id = {$userId} THEN pass_percentage_away
-                    END)::numeric, 2) as avg_pass_percentage
+                    END)::numeric, 2) as avg_pass_percentage,
+                    ROUND(SUM(CASE
+                        WHEN home_user_id = {$userId} THEN powerplays_received_home
+                        WHEN away_user_id = {$userId} THEN powerplays_received_away
+                        ELSE 0
+                    END) / (SELECT COUNT(*) FROM games WHERE home_user_id = {$userId} AND away_user_id = {$player->id} OR home_user_id = {$player->id} AND away_user_id = {$userId}), 0) AS powerplay_possibility,
+                    ROUND(100 / SUM(CASE
+                        WHEN home_user_id = {$userId} THEN powerplays_received_home
+                        WHEN away_user_id = {$userId} THEN powerplays_received_away
+                        ELSE 0
+                    END) * SUM(CASE
+                        WHEN home_user_id = {$userId} THEN powerplays_used_home
+                        WHEN away_user_id = {$userId} THEN powerplays_used_away
+                        ELSE 0
+                    END), 2) AS powerplay_score_probability
                 "))->where('home_user_id', $userId)->where('away_user_id', $player->id)
                     ->orWhere('away_user_id', $userId)->where('home_user_id', $player->id)->first();
 
@@ -150,6 +170,8 @@ class DashboardScreen extends Screen
                 $playerMetrics['avg_hits_' . $player['id']] = ['value' => $playerStats['avg_hits']];
                 $playerMetrics['avg_pass_percentage_' . $player['id']] = ['value' => $playerStats['avg_pass_percentage']];
                 $playerMetrics['avg_time_in_offense_against_' . $player['id']] = ['value' => DateHelper::minuteAndSecondFormatFromSeconds($playerStats['avg_offense_time']),
+                $playerMetrics['powerplay_possibility_against_' . $player['id']] = ['value' => $playerStats['powerplay_possibility']],
+                $playerMetrics['powerplay_score_probability_against_' . $player['id']] = ['value' => $playerStats['powerplay_score_probability']]
                 ];
             }
 
@@ -209,6 +231,7 @@ class DashboardScreen extends Screen
             $totalMetrics = [
                 __('games.total') => 'total_metrics.total_games',
                 __('dashboard.total_goals') => 'total_metrics.total_goals',
+                __('dashboard.total_shorthanded_goals') => 'total_metrics.total_shorthanded_goals',
                 __('dashboard.goals_per_game') => 'total_metrics.goals_per_game',
                 __('dashboard.total_shots') => 'total_metrics.total_shots',
                 __('dashboard.total_shots_for_goal') => 'total_metrics.shots_for_goal',
@@ -238,6 +261,8 @@ class DashboardScreen extends Screen
                 $playerMetrics[__('dashboard.avg_hits_against') . ' ' . $name] = 'player_metrics.avg_hits_' . $player['id'];
                 $playerMetrics[__('dashboard.avg_pass_percentage') . ' ' . $name] = 'player_metrics.avg_pass_percentage_' . $player['id'];
                 $playerMetrics[__('dashboard.avg_time_in_offense_against') . ' ' . $name] = 'player_metrics.avg_time_in_offense_against_' . $player['id'];
+                $playerMetrics[__('dashboard.powerplay_possibility_against') . ' ' . $name] = 'player_metrics.powerplay_possibility_against_' . $player['id'];
+                $playerMetrics[__('dashboard.powerplay_score_probability_against') . ' ' . $name] = 'player_metrics.powerplay_score_probability_against_' . $player['id'];
             }
 
             $content[] = Layout::metrics($totalMetrics);
