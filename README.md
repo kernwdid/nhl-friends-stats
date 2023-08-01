@@ -13,6 +13,7 @@ didiwein[at]hotmail.com
 
 - Total games
 - Total goals
+- Total shorthanded goals
 - Average goals per game
 - Total shots
 - Average shots for one goal

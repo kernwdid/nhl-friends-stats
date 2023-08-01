@@ -12,6 +12,7 @@ return [
     'avg_pass_percentage' => 'Passgenauigkeit in % gegen',
     'avg_time_in_offense_against' => 'Ø Offensivzeit gegen',
     'total_goals' => 'Total Tore',
+    'total_shorthanded_goals' => 'Total Anzahl Tore in Unterzahl',
     'total_shots' => 'Total Schüsse',
     'total_hits' => 'Total Checks',
     'goals_per_game' => 'Ø Tore pro Spiel',

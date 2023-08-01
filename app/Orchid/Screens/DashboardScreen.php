@@ -35,6 +35,11 @@ class DashboardScreen extends Screen
                 ELSE 0
             END), 0) AS goals,
             COALESCE(SUM(CASE
+                WHEN home_user_id = {$userId} THEN shorthanded_goals_home
+                WHEN away_user_id = {$userId} THEN shorthanded_goals_away
+                ELSE 0
+            END), 0) AS shorthanded_goals,
+            COALESCE(SUM(CASE
                 WHEN home_user_id = {$userId} THEN shots_home
                 WHEN away_user_id = {$userId} THEN shots_away
                 ELSE 0
@@ -52,6 +57,7 @@ class DashboardScreen extends Screen
                 'total_games' => ['value' => number_format($totalStats['games'])],
                 'total_goals' => ['value' => number_format($totalStats['goals'])],
                 'goals_per_game' => ['value' => $totalStats['goals'] ? round($totalStats['goals'] / $totalStats['games'], 2) : $totalStats['goals']],
+                'total_shorthanded_goals' => ['value' => $totalStats['shorthanded_goals'] ? round($totalStats['shorthanded_goals'], 2) : $totalStats['shorthanded_goals']],
                 'total_shots' => ['value' => number_format($totalStats['shots'])],
                 'total_hits' => ['value' => number_format($totalStats['hits'])],
                 'shots_for_goal' => ['value' => $totalStats['shots'] ? round($totalStats['shots'] / $totalStats['goals'], 2) : 0],
@@ -225,6 +231,7 @@ class DashboardScreen extends Screen
             $totalMetrics = [
                 __('games.total') => 'total_metrics.total_games',
                 __('dashboard.total_goals') => 'total_metrics.total_goals',
+                __('dashboard.total_shorthanded_goals') => 'total_metrics.total_shorthanded_goals',
                 __('dashboard.goals_per_game') => 'total_metrics.goals_per_game',
                 __('dashboard.total_shots') => 'total_metrics.total_shots',
                 __('dashboard.total_shots_for_goal') => 'total_metrics.shots_for_goal',
