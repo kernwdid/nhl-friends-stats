@@ -29,6 +29,8 @@ Against each player you played against the following stats are available:
 - Average checks against player
 - Average pass percentage against player
 - Average time in offense against player
+- Powerplay possibility
+- Powerplay score probability
 
 ## Content
 
