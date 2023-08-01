@@ -16,4 +16,6 @@ return [
     'total_hits' => 'Total Checks',
     'goals_per_game' => 'Ø Tore pro Spiel',
     'total_shots_for_goal' => 'Ø Schüsse für 1 Tor',
+    'powerplay_possibility_against' => 'Voraussichtliche Anzahl PP gegen',
+    'powerplay_score_probability_against' => 'PP ausgenutzt in % gegen'
 ];
