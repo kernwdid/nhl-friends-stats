@@ -7,12 +7,14 @@ use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Orchid\Attachment\Models\Attachment;
 use Orchid\Screen\Fields\Cropper;
 use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Fields\TextArea;
 use Orchid\Screen\Layouts\Listener;
+use Orchid\Screen\Repository;
 use Orchid\Support\Facades\Layout;
 
 class ResultUploadListener extends Listener
@@ -53,7 +55,8 @@ class ResultUploadListener extends Listener
         $totalAttachments = Attachment::where('created_at', Carbon::now()->subMonth()->toDateTimeString())->count();
 
         if ($totalAttachments < config('app.gc_ocr_analyzing_limit')) {
-            $fields = [Cropper::make('game_result')
+            $fields = [
+                Cropper::make('game_result')
                 ->help(__('games.upload_limit'))
                 ->title(__('games.upload_result'))
                 ->targetId(),
@@ -211,5 +214,12 @@ class ResultUploadListener extends Listener
         return [
             Layout::rows($fields),
         ];
+    }
+
+    public function handle(Repository $repository, Request $request): Repository
+    {
+        [$gameResult] = $request->all();
+
+        return $repository->set('game_result', $gameResult);
     }
 }

@@ -24,7 +24,7 @@ use Tabuna\Breadcrumbs\Trail;
 */
 
 // Main
-Route::screen('/dashboard', DashboardScreen::class)
+Route::screen('dashboard', DashboardScreen::class)
     ->name('platform.dashboard');
 
 Route::screen('upload_result', VisionScreen::class)

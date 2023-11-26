@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Orchid\Attachment\Attachable;
 use Orchid\Filters\Filterable;
+use Orchid\Filters\Types\Ilike;
+use Orchid\Filters\Types\Where;
 use Orchid\Screen\AsSource;
 
 class Team extends Model
@@ -36,7 +38,7 @@ class Team extends Model
      * @var array<string>
      */
     protected $allowedFilters = [
-        'name',
-        'division',
+        'name' => ILike::class,
+        'division' => Where::class
     ];
 }

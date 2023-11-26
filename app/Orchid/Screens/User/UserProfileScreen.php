@@ -60,7 +60,11 @@ class UserProfileScreen extends Screen
      */
     public function commandBar(): iterable
     {
-        return [];
+        return [
+            Button::make('Sign out')
+                ->icon('bs.box-arrow-left')
+                ->route('platform.logout')
+        ];
     }
 
     /**

@@ -30,8 +30,7 @@ class PlatformProvider extends OrchidServiceProvider
 
             Menu::make(__('Dashboard'))
                 ->icon('chart')
-                ->route('platform.dashboard')
-                ->title('Navigation'),
+                ->route('platform.dashboard'),
 
             Menu::make(__(__('games.upload_result')))
                 ->icon('picture')->permission('resource.games')
@@ -56,18 +55,6 @@ class PlatformProvider extends OrchidServiceProvider
                 ->icon('lock')
                 ->route('platform.systems.roles')
                 ->permission('platform.systems.roles'),
-        ];
-    }
-
-    /**
-     * @return array<Menu>
-     */
-    public function registerProfileMenu(): array
-    {
-        return [
-            Menu::make(__('Profile'))
-                ->route('platform.profile')
-                ->icon('user'),
         ];
     }
 

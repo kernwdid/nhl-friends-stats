@@ -77,10 +77,10 @@ class TeamResource extends Resource
             TD::make('id', 'ID'),
             TD::make('name')->render(function ($model) {
                 return $model->name;
-            })->filter()->sort(),
+            })->filter(Input::make())->sort(),
             TD::make('division', 'Division')->render(function ($model) {
                 return $model->division;
-            })->filter(Select::make()->fromModel(Team::class, 'division', 'division'))->sort(),
+            })->filter(Select::make()->fromModel(Team::class, 'division', 'division')->empty())->sort(),
             TD::make('overall_rating', __('teams.overall_rating'))->render(function ($model) {
                 return $model->overall_rating;
             })->alignRight()->sort(),
