@@ -21,7 +21,8 @@ class UserAndAuthSeeder extends Seeder
         $playerRole = Role::create(['slug' => 'player', 'name' => 'Spieler', 'permissions' => [
             'platform.index' => 1,
             'resource.games' => 1,
-            'resource.teams' => 1
+            'resource.teams' => 1,
+            'resource.tournaments' => 1
         ]]);
 
         User::factory()->create([
