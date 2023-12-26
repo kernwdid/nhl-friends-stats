@@ -7,7 +7,7 @@ use App\Models\Tournament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Orchid\Screen\Action;
-use Orchid\Screen\Actions\Button;
+use Orchid\Screen\Actions\Link;
 use Orchid\Screen\Repository;
 use Orchid\Screen\Screen;
 use Orchid\Screen\TD;
@@ -42,7 +42,9 @@ class TournamentInfoScreen extends Screen
             $points = Round::select(DB::raw("
                 SUM(CASE
                 WHEN games.home_user_id = {$player->id} AND games.goals_home > games.goals_away THEN 2
+                WHEN games.home_user_id = {$player->id} AND games.goals_home < games.goals_away AND win_type != 'regular' THEN 1
                 WHEN games.away_user_id = {$player->id} AND games.goals_away > games.goals_home THEN 2
+                WHEN games.away_user_id = {$player->id} AND games.goals_away < games.goals_home AND win_type != 'regular' THEN 1
                 ELSE 0
                 END) AS points
             "))->leftJoin('games', 'rounds.game_id', '=', 'games.id')
@@ -107,7 +109,7 @@ class TournamentInfoScreen extends Screen
             ])->title('Leaderboard'),
         ];
 
-        if ($this->currentRound && $this->currentRound < $this->tournament->id) {
+        if ($this->currentRound) {
             $content[] = Layout::table('current-round', [
                 TD::make('home_user', __('games.home'))->render(function (Repository $repository) {
                     return $repository->get('home_user')['name'];
@@ -120,7 +122,13 @@ class TournamentInfoScreen extends Screen
                 TD::make('game', __('games.result'))->render(function (Repository $repository) {
                     $game = $repository->get('game');
                     if ($game) {
-                        return '<a href="/crud/view/game-resources/' . $game['id'] . '">' . $game['goals_home'] . " - " . $game['goals_away'] . '</a>';
+                        $result = $game['goals_home'] . " - " . $game['goals_away'];
+
+                        if ($game['win_type'] != 'regular') {
+                            $result .= " " . __('games.win_type_short_' . $game['win_type']);
+                        }
+
+                        return '<a href="/crud/view/game-resources/' . $game['id'] . '">' . $result . '</a>';
                     }
                     $currentUser = $this->request->user()->id;
                     if ($currentUser != $repository->get('home_user_id') && $currentUser != $repository->get('away_user_id')) {
@@ -152,7 +160,7 @@ class TournamentInfoScreen extends Screen
 
         if (!$this->currentRound || $this->currentRound > 1) {
             $content[] = Layout::rows([
-                Button::make(__('tournaments.show_previous_rounds'))
+                Link::make(__('tournaments.all_rounds_results'))->href('/previous-rounds/' . $this->tournament->id)
             ]);
         }
 

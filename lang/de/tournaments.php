@@ -7,6 +7,8 @@ return [
     'max_team_overall_rating_difference' => 'Maximaler Unterschied der Gesamtwertung zwischen Teams',
     'players' => 'Spieler',
     'current_round' => 'Aktuelle Runde',
-    'show_previous_rounds' => 'Vergangene Runden ansehen',
-    'finished' => 'Dieses Turnier ist abgeschlossen'
+    'show_all_rounds_results' => 'Alle Runden-Ergebnisse ansehen',
+    'finished' => 'Dieses Turnier ist abgeschlossen',
+    'round' => 'Runde',
+    'all_rounds_results' => 'Alle Runden-Ergebnisse'
 ];

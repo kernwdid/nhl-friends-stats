@@ -31,8 +31,8 @@ class Game extends Model
         'away_team_id',
         'goals_home',
         'goals_away',
+        'win_type',
         'created_at',
-        'updated_at',
     ];
 
     public function home_user(): BelongsTo

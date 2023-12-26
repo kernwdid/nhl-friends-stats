@@ -154,6 +154,10 @@ class ResultUploadListener extends Listener
                 ->max(50)
                 ->min(0)
                 ->required(),
+            Select::make('win_type')
+                ->options(['regular' => __('games.win_type_regular'), 'ot' => __('games.win_type_ot'), 'so' => __('games.win_type_so')])
+                ->required()
+                ->title(__('games.win_type')),
             Input::make('shots_away')
                 ->min(0)
                 ->required()

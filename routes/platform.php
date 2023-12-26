@@ -14,6 +14,7 @@ use App\Orchid\Screens\Examples\ExampleTextEditorsScreen;
 use App\Orchid\Screens\Role\RoleEditScreen;
 use App\Orchid\Screens\Role\RoleListScreen;
 use App\Orchid\Screens\TournamentInfoScreen;
+use App\Orchid\Screens\TournamentPreviousRoundsScreen;
 use App\Orchid\Screens\User\UserEditScreen;
 use App\Orchid\Screens\User\UserListScreen;
 use App\Orchid\Screens\User\UserProfileScreen;
@@ -38,6 +39,9 @@ Route::screen('dashboard', DashboardScreen::class)
 
 Route::screen('tournament-info/{id}', TournamentInfoScreen::class)
     ->name('platform.tournament-info');
+
+Route::screen('previous-rounds/{id}', TournamentPreviousRoundsScreen::class)
+    ->name('platform.previous-rounds');
 
 Route::screen('upload_result', VisionScreen::class)
     ->name('platform.vision.index');
