@@ -3,7 +3,9 @@
 namespace App\Orchid\Layouts;
 
 use App\Helpers\DateHelper;
+use App\Models\Round;
 use App\Models\Team;
+use App\Models\Tournament;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,15 +53,16 @@ class ResultUploadListener extends Listener
      */
     protected function layouts(): iterable
     {
+        $queryParams = $this->query->get('query');
         $fields = [];
         $totalAttachments = Attachment::where('created_at', Carbon::now()->subMonth()->toDateTimeString())->count();
 
         if ($totalAttachments < config('app.gc_ocr_analyzing_limit')) {
             $fields = [
                 Cropper::make('game_result')
-                ->help(__('games.upload_limit'))
-                ->title(__('games.upload_result'))
-                ->targetId(),
+                    ->help(__('games.upload_limit'))
+                    ->title(__('games.upload_result'))
+                    ->targetId(),
                 TextArea::make('view_result')
                     ->disabled()
                     ->rows(5)
@@ -78,29 +81,65 @@ class ResultUploadListener extends Listener
         $parseSeconds = function () {
             $value = $this->get('value');
             if (is_numeric($value)) {
-                $this->set('value', DateHelper::minuteAndSecondFormatFromSeconds($value));
+                $this->query->set('value', DateHelper::minuteAndSecondFormatFromSeconds($value));
             }
         };
+
+        $disableHomeTeam = false;
+        if (array_key_exists('home_team_id', $queryParams)) {
+            if (is_numeric($queryParams['home_team_id'])) {
+                $disableHomeTeam = true;
+                $this->query->set('home_team_id', $queryParams['home_team_id']);
+            }
+        }
+
+        $disableAwayTeam = false;
+        if (array_key_exists('away_team_id', $queryParams)) {
+            if (is_numeric($queryParams['away_team_id'])) {
+                $disableAwayTeam = true;
+                $this->query->set('away_team_id', $queryParams['away_team_id']);
+            }
+        }
+
+        $disableHomeUser = false;
+        if (array_key_exists('home_user_id', $queryParams)) {
+            if (is_numeric($queryParams['home_user_id'])) {
+                $this->query->set('home_user_id', $queryParams['home_user_id']);
+                $disableHomeUser = true;
+            }
+        }
+
+        $disableAwayUser = false;
+        if (array_key_exists('away_user_id', $queryParams)) {
+            if (is_numeric($queryParams['away_user_id'])) {
+                $this->query->set('away_user_id', $queryParams['away_user_id']);
+                $disableAwayUser = true;
+            }
+        }
 
         $fields = array_merge($fields, [
             Select::make('away_user_id')
                 ->required()
+                ->disabled($disableAwayUser)
                 ->empty(__('general.select'), '')
                 ->fromModel($users, 'name', 'id')
                 ->title(__('games.away')),
             Select::make('home_user_id')
                 ->required()
+                ->disabled($disableHomeUser)
                 ->empty(__('general.select'), '')
                 ->fromModel($users, 'name', 'id')
                 ->title(__('games.home')),
             Select::make('away_team_id')
                 ->required()
+                ->disabled($disableAwayTeam)
                 ->empty(__('general.select'), '')
                 ->fromModel(Team::class, 'name', 'id')
                 ->title(__('games.away_team')),
             Select::make('home_team_id')
                 ->empty(__('general.select'), '')
                 ->required()
+                ->disabled($disableHomeTeam)
                 ->fromModel(Team::class, 'name', 'id')
                 ->title(__('games.home_team')),
             Input::make('goals_away')
@@ -115,6 +154,10 @@ class ResultUploadListener extends Listener
                 ->max(50)
                 ->min(0)
                 ->required(),
+            Select::make('win_type')
+                ->options(['regular' => __('games.win_type_regular'), 'ot' => __('games.win_type_ot'), 'so' => __('games.win_type_so')])
+                ->required()
+                ->title(__('games.win_type')),
             Input::make('shots_away')
                 ->min(0)
                 ->required()
@@ -211,10 +254,48 @@ class ResultUploadListener extends Listener
                 ->required()
                 ->title(__('games.shorthanded_goals_home')),
         ]);
+
+        if ($disableHomeTeam) {
+            $fields[] = Input::make('home_team_id')->hidden()->value($queryParams['home_team_id']);
+        }
+
+        if ($disableAwayTeam) {
+            $fields[] = Input::make('away_team_id')->hidden()->value($queryParams['away_team_id']);
+        }
+
+        if ($disableHomeUser) {
+            $fields[] = Input::make('home_user_id')->hidden()->value($queryParams['home_user_id']);
+        }
+
+        if ($disableAwayUser) {
+            $fields[] = Input::make('away_user_id')->hidden()->value($queryParams['away_user_id']);
+        }
+
+        if (array_key_exists('round_id', $queryParams)) {
+            if (is_numeric($queryParams['round_id'])) {
+                $round = Round::find($queryParams['round_id']);
+                if ($round) {
+                    $fields[] = Input::make('round_id')->hidden()->value($queryParams['round_id']);
+                }
+            }
+        }
+
+        if (array_key_exists('tournament_id', $queryParams)) {
+            if (is_numeric($queryParams['tournament_id'])) {
+                $tournament = Tournament::find($queryParams['tournament_id']);
+                if ($tournament) {
+                    $fields[] = Input::make('tournament_id')->hidden()->value($queryParams['tournament_id']);
+                }
+            }
+        }
+
+
         return [
             Layout::rows($fields),
         ];
     }
+
+
 
     public function handle(Repository $repository, Request $request): Repository
     {

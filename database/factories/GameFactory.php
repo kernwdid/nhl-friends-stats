@@ -34,7 +34,7 @@ class GameFactory extends Factory
         $homePPUsed = $this->faker->numberBetween(0, $homePPReceived);
         $awayPPUsed = $this->faker->numberBetween(0, $awayPPReceived);
         $goalsHome = $this->faker->randomDigit();
-        $goalsAway = $this->faker->randomDigit();
+        $goalsAway = $this->faker->randomDigitNot($goalsHome);
         return [
             'home_user_id' => $homeUser,
             'away_user_id' => $awayUser,
@@ -42,6 +42,7 @@ class GameFactory extends Factory
             'away_team_id' => Team::inRandomOrder()->first(),
             'goals_home' => $goalsHome,
             'goals_away' => $goalsAway,
+            'win_type' => $this->faker->randomElement(['regular', 'ot', 'so']),
             'shots_home' => $this->faker->numberBetween(0, 40),
             'shots_away' => $this->faker->numberBetween(0, 40),
             'time_in_offense_home_in_seconds' => $this->faker->numberBetween(0, 5400),

@@ -35,4 +35,12 @@ return [
     'detection_percentage' => 'Resultat-Erkennung in %',
     'upload_limit' => 'Pro Monat können alle Spieler zusammen maximal 750 Resultate analysieren.',
     'save' => 'Spiel erstellen',
+    'result' => 'Resultat',
+    'win_type' => 'Sieg nach',
+    'win_type_regular' => 'Reguläre Spielzeit',
+    'win_type_ot' => 'Verlängerung',
+    'win_type_so' => 'Penaltyschiessen',
+    'win_type_short_regular' => 'FINAL',
+    'win_type_short_ot' => 'OT',
+    'win_type_short_so' => 'SO'
 ];

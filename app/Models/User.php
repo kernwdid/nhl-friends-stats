@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Orchid\Platform\Models\User as Authenticatable;
 
 class User extends Authenticatable
@@ -63,4 +64,8 @@ class User extends Authenticatable
         'updated_at',
         'created_at',
     ];
+
+    public function tournaments(): BelongsToMany {
+        return $this->belongsToMany(Tournament::class, 'tournament_players');
+    }
 }

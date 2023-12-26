@@ -32,9 +32,9 @@ class PlatformProvider extends OrchidServiceProvider
                 ->icon('chart')
                 ->route('platform.dashboard'),
 
-            Menu::make(__(__('games.upload_result')))
-                ->icon('picture')->permission('resource.games')
-                ->route('platform.vision.index'),
+            Menu::make(__('tournaments.title'))->icon('energy')
+            ->permission('resource.tournaments')
+            ->route('platform.resource.list', ['resource' => 'tournament-resources']),
             Menu::make(__('games.title'))
                 ->icon('game-controller')
                 ->permission('resource.games')

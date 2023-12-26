@@ -3,8 +3,18 @@
 declare(strict_types=1);
 
 use App\Orchid\Screens\DashboardScreen;
+use App\Orchid\Screens\Examples\ExampleActionsScreen;
+use App\Orchid\Screens\Examples\ExampleCardsScreen;
+use App\Orchid\Screens\Examples\ExampleChartsScreen;
+use App\Orchid\Screens\Examples\ExampleFieldsAdvancedScreen;
+use App\Orchid\Screens\Examples\ExampleFieldsScreen;
+use App\Orchid\Screens\Examples\ExampleLayoutsScreen;
+use App\Orchid\Screens\Examples\ExampleScreen;
+use App\Orchid\Screens\Examples\ExampleTextEditorsScreen;
 use App\Orchid\Screens\Role\RoleEditScreen;
 use App\Orchid\Screens\Role\RoleListScreen;
+use App\Orchid\Screens\TournamentInfoScreen;
+use App\Orchid\Screens\TournamentPreviousRoundsScreen;
 use App\Orchid\Screens\User\UserEditScreen;
 use App\Orchid\Screens\User\UserListScreen;
 use App\Orchid\Screens\User\UserProfileScreen;
@@ -26,6 +36,12 @@ use Tabuna\Breadcrumbs\Trail;
 // Main
 Route::screen('dashboard', DashboardScreen::class)
     ->name('platform.dashboard');
+
+Route::screen('tournament-info/{id}', TournamentInfoScreen::class)
+    ->name('platform.tournament-info');
+
+Route::screen('previous-rounds/{id}', TournamentPreviousRoundsScreen::class)
+    ->name('platform.previous-rounds');
 
 Route::screen('upload_result', VisionScreen::class)
     ->name('platform.vision.index');
