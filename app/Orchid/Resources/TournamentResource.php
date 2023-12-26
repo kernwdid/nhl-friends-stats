@@ -71,7 +71,7 @@ class TournamentResource extends Resource
         return [
             TD::make('id', 'ID'),
             TD::make('name')->render(function ($model) {
-                return $model->name;
+                return '<a href="/tournament-info/' . $model->id . '">' . $model->name . '</a>';
             })->sort(),
             TD::make('created_at', __('general.created_at'))
                 ->render(function ($model) {

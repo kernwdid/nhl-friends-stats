@@ -35,4 +35,5 @@ return [
     'detection_percentage' => 'Resultat-Erkennung in %',
     'upload_limit' => 'Pro Monat können alle Spieler zusammen maximal 750 Resultate analysieren.',
     'save' => 'Spiel erstellen',
+    'result' => 'Resultat'
 ];

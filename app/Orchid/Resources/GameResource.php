@@ -207,7 +207,6 @@ class GameResource extends Resource
     public function columns(): array
     {
         return [
-
             TD::make('home_user', __('games.home'))->render(function ($game) {
                 return $game->home_user->name;
             })->sort(),
@@ -282,20 +281,20 @@ class GameResource extends Resource
             Sight::make('faceoffs_won_home', __('games.faceoffs_won_home')),
             Sight::make('faceoffs_won_away', __('games.faceoffs_won_away')),
             Sight::make('penalty_minutes_home_in_seconds', __('games.penalty_minutes_home_in_seconds'))->render(function ($game) {
-                return $game->penalty_minutes_home_in_seconds ? DateHelper::minuteAndSecondFormatFromSeconds($game->penalty_minutes_home_in_seconds) : '';
+                return DateHelper::minuteAndSecondFormatFromSeconds($game->penalty_minutes_home_in_seconds);
             }),
             Sight::make('penalty_minutes_away_in_seconds', __('games.penalty_minutes_away_in_seconds'))->render(function ($game) {
-                return $game->penalty_minutes_away_in_seconds ? DateHelper::minuteAndSecondFormatFromSeconds($game->penalty_minutes_away_in_seconds) : '';
+                return DateHelper::minuteAndSecondFormatFromSeconds($game->penalty_minutes_away_in_seconds);
             }),
             Sight::make('powerplays_used_home', __('games.powerplays_used_home')),
             Sight::make('powerplays_used_away', __('games.powerplays_used_away')),
             Sight::make('powerplays_received_home', __('games.powerplays_received_home')),
             Sight::make('powerplays_received_away', __('games.powerplays_received_away')),
             Sight::make('powerplay_time_home_in_seconds', __('games.powerplay_time_home_in_seconds'))->render(function ($game) {
-                return $game->powerplay_time_home_in_seconds ? DateHelper::minuteAndSecondFormatFromSeconds($game->powerplay_time_home_in_seconds) : '';
+                return DateHelper::minuteAndSecondFormatFromSeconds($game->powerplay_time_home_in_seconds);
             }),
             Sight::make('powerplay_time_away_in_seconds', __('games.powerplay_time_away_in_seconds'))->render(function ($game) {
-                return $game->powerplay_time_away_in_seconds ? DateHelper::minuteAndSecondFormatFromSeconds($game->powerplay_time_away_in_seconds) : '';
+                return DateHelper::minuteAndSecondFormatFromSeconds($game->powerplay_time_away_in_seconds);
             }),
             Sight::make('shorthanded_goals_home', __('games.shorthanded_goals_home')),
             Sight::make('shorthanded_goals_away', __('games.shorthanded_goals_away')),

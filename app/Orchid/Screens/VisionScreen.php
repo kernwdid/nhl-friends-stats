@@ -5,6 +5,7 @@ namespace App\Orchid\Screens;
 use App\Helpers\DateHelper;
 use App\Http\Controllers\VisionController;
 use App\Models\Game;
+use App\Models\Round;
 use App\Orchid\Layouts\ResultUploadListener;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,7 @@ use Orchid\Screen\Action;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Layout;
 use Orchid\Screen\Screen;
+use function DeepCopy\deep_copy;
 
 class VisionScreen extends Screen
 {
@@ -24,9 +26,9 @@ class VisionScreen extends Screen
      *
      * @return array
      */
-    public function query(): iterable
+    public function query(Request $request): iterable
     {
-        return [];
+        return ['query' => $request->query()];
     }
 
     /**
@@ -59,6 +61,18 @@ class VisionScreen extends Screen
             'game_result' => 'exclude',
         ]);
 
+        $roundId = null;
+        if (array_key_exists('round_id', $data)) {
+            $roundId = deep_copy($data['round_id']);
+            unset($data['round_id']);
+        }
+
+        $tournamentId = null;
+        if (array_key_exists('tournament_id', $data)) {
+            $tournamentId = deep_copy($data['tournament_id']);
+            unset($data['tournament_id']);
+        }
+
         if (array_key_exists('game_result', $data)) {
             unset($data['game_result']);
         }
@@ -87,6 +101,17 @@ class VisionScreen extends Screen
 
         $game = new Game($data);
         $game->save();
+
+        if ($roundId) {
+            $round = Round::find($roundId);
+            $round->game_id = $game->id;
+            $round->save();
+        }
+
+        if ($tournamentId) {
+            return redirect('/tournament-info/' . $tournamentId);
+        }
+
         return redirect('/');
     }
 
