@@ -39,20 +39,75 @@ class TournamentInfoScreen extends Screen
     {
         $leaderboard = [];
         foreach ($this->tournament->players as $player) {
-            $points = Round::select(DB::raw("
+            $stats = Round::select(DB::raw("
                 SUM(CASE
                 WHEN games.home_user_id = {$player->id} AND games.goals_home > games.goals_away THEN 2
                 WHEN games.home_user_id = {$player->id} AND games.goals_home < games.goals_away AND win_type != 'regular' THEN 1
                 WHEN games.away_user_id = {$player->id} AND games.goals_away > games.goals_home THEN 2
                 WHEN games.away_user_id = {$player->id} AND games.goals_away < games.goals_home AND win_type != 'regular' THEN 1
                 ELSE 0
-                END) AS points
+                END) AS points,
+                SUM(CASE
+                WHEN games.home_user_id = {$player->id} THEN games.goals_home
+                WHEN games.away_user_id = {$player->id} THEN games.goals_away
+                ELSE 0
+                END) AS goals_scored,
+                SUM(CASE
+                WHEN games.home_user_id = {$player->id} THEN games.goals_away
+                WHEN games.away_user_id = {$player->id} THEN games.goals_home
+                ELSE 0
+                END) AS goals_received
             "))->leftJoin('games', 'rounds.game_id', '=', 'games.id')
                 ->where('rounds.tournament_id', $this->tournament->id)
-                ->where('rounds.home_user_id', $player->id)
-                ->orWhere('rounds.away_user_id', $player->id)
-                ->pluck('points')->first();
-            $leaderboard[] = new Repository(['name' => $player->name, 'points' => $points]);
+                ->where(function ($query) use ($player) {
+                    $query->where('games.home_user_id', $player->id)
+                        ->orWhere('games.away_user_id', $player->id);
+                })->first();
+
+            $gamesPlayed = Round::where('tournament_id', $this->tournament->id)
+                ->whereNotNull('game_id')
+                ->where(function ($query) use ($player) {
+                    $query->where('rounds.home_user_id', $player->id)
+                        ->orWhere('rounds.away_user_id', $player->id);
+                })
+                ->count();
+
+            $leaderboard[] = new Repository([
+                'name' => $player->name,
+                'games_played' => $gamesPlayed,
+                'points' => $stats['points'] ?? 0,
+                'goals' => ($stats['goals_scored'] ?? 0) . ":" . ($stats['goals_received'] ?? 0)
+            ]);
+        }
+
+        usort($leaderboard, function ($a, $b) {
+            return $b['points'] - $a['points'];
+        });
+
+        $index = 1;
+        foreach ($leaderboard as $entry) {
+            $entry['index'] = $index++;
+        }
+
+        $sortBy = $this->request->query('sort');
+        if ($sortBy) {
+            $sort = $sortBy;
+            $desc = $sortBy[0] == '-';
+            if ($desc) {
+                $sort = substr($sort, 1);
+            }
+            usort($leaderboard, function ($a, $b) use($sort, $desc) {
+                if ($desc) {
+                    if (is_numeric($b[$sort]) && is_numeric($a[$sort])) {
+                        return $b[$sort] - $a[$sort];
+                    }
+                    return strcmp($b[$sort], $a[$sort]);
+                }
+                if (is_numeric($b[$sort]) && is_numeric($a[$sort])) {
+                    return $a[$sort] - $b[$sort];
+                }
+                return strcmp($a[$sort], $b[$sort]);
+            });
         }
 
         $currentRound = Round::where('tournament_id', $this->tournament->id)
@@ -65,7 +120,7 @@ class TournamentInfoScreen extends Screen
             ->get();
 
         $roundItems = [];
-        foreach($currentRound as $roundItem) {
+        foreach ($currentRound as $roundItem) {
             $roundItems[] = new Repository($roundItem->toArray());
         }
 
@@ -104,8 +159,11 @@ class TournamentInfoScreen extends Screen
     {
         $content = [
             Layout::table('leaderboard', [
-                    TD::make('name')->cantHide(),
-                TD::make('points')->cantHide()
+                TD::make('index', 'POS')->sort()->cantHide(),
+                TD::make('name')->cantHide()->sort()->cantHide(),
+                TD::make('games_played', 'GP')->cantHide()->sort()->alignRight(),
+                TD::make('goals', 'G')->cantHide()->sort()->alignRight(),
+                TD::make('points', 'P')->cantHide()->sort()->alignRight(),
             ])->title('Leaderboard'),
         ];
 
