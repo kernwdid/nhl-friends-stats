@@ -41,4 +41,13 @@ class Team extends Model
         'name' => ILike::class,
         'division' => Where::class
     ];
+
+    protected $fillable = [
+        'name',
+        'division',
+        'overall_rating',
+        'offense_rating',
+        'defense_rating',
+        'goaltender_rating'
+    ];
 }

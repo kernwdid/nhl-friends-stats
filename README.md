@@ -4,7 +4,7 @@
 Since it is not possible to track NHL Online Versus Games (unranked) against friends,
 I created a web application to track all the scores, create tournaments and show some statistics for you and your friends.
 
-Current team stats taken from October 2023 but can be adjusted to your liking.
+Current team stats taken from November 2024 but can be adjusted to your liking.
 
 Feel free to use it and if you want to collaborate or have any questions, contact me at any time:
 didiwein[at]hotmail.com
