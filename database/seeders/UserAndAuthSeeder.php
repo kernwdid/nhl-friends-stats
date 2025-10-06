@@ -42,5 +42,11 @@ class UserAndAuthSeeder extends Seeder
             'email' => 'alex@example.com',
             'password' => $abcPassword
         ])->addRole($playerRole);
+
+        User::factory()->create([
+            'name' => 'Manu',
+            'email' => 'manu@example.com',
+            'password' => $abcPassword
+        ])->addRole($playerRole);
     }
 }

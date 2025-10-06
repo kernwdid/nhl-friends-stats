@@ -119,39 +119,61 @@ class TournamentResource extends Resource
         $teamGraph = $this->createTournamentGraph();
         $calculatedTournamentOptions = $this->calculatePossibleMatches($teamGraph, $tournament['max_team_overall_rating_difference']);
 
-        shuffle($calculatedTournamentOptions['matches']);
+        $teamMatches = $calculatedTournamentOptions['matches'];
+        shuffle($teamMatches);
+
+        $players = $tournament['players'];
+        $playerPairings = [];
+
+        if (count($players) % 2 !== 0) {
+            $players[] = null;
+        }
+
+        $playerCount = count($players);
+        $rounds = $playerCount - 1;
+
+        for ($r = 0; $r < $rounds; $r++) {
+            for ($i = 0; $i < $playerCount / 2; $i++) {
+                $player1 = $players[$i];
+                $player2 = $players[$playerCount - 1 - $i];
+
+                if ($player1 !== null && $player2 !== null) {
+                    $playerPairings[] = [$player1, $player2];
+                }
+            }
+
+            $firstPlayer = $players[0];
+            $rotatingPlayers = array_slice($players, 1);
+            $lastPlayer = array_pop($rotatingPlayers);
+            array_unshift($rotatingPlayers, $lastPlayer);
+            $players = array_merge([$firstPlayer], $rotatingPlayers);
+        }
+
+        shuffle($playerPairings); // Randomize the order of fair matches
 
         $roundEntries = [];
-        $gamesScheduled = 0;
         $gamesToSchedule = $tournament['total_games_per_player'] * count($tournament['players']) / 2;
+        $gamesScheduled = 0;
         $round = 1;
-        $players = $tournament['players'];
-        foreach ($calculatedTournamentOptions['matches'] as $shuffledMatch) {
-            $team1 = $shuffledMatch[0];
-            $team2 = $shuffledMatch[1];
+        $gamesPerRound = $gamesToSchedule / $tournament['rounds'];;
 
-            $player1 = array_shift($players);
-            $player2 = array_shift($players);
+        for ($i = 0; $i < $gamesToSchedule; $i++) {
+            $currentPlayers = $playerPairings[$i % count($playerPairings)];
+            $currentTeams = $teamMatches[$i % count($teamMatches)];
+
             $roundEntries[] = [
                 'round' => $round,
-                'home_team_id' => $team1,
-                'away_team_id' => $team2,
-                'home_user_id' => intval($player1),
-                'away_user_id' => intval($player2),
+                'home_team_id' => $currentTeams[0],
+                'away_team_id' => $currentTeams[1],
+                'home_user_id' => intval($currentPlayers[0]),
+                'away_user_id' => intval($currentPlayers[1]),
                 'tournament_id' => $model->id
             ];
             $gamesScheduled += 1;
 
-            if ($gamesScheduled >= $gamesToSchedule) {
-                break;
-            }
-
-            if ($gamesScheduled % ($gamesToSchedule / $tournament['rounds']) == 0) {
+            if ($gamesScheduled % $gamesPerRound == 0 && $gamesScheduled < $gamesToSchedule) {
                 $round += 1;
             }
-
-            $players[] = $player1;
-            $players[] = $player2;
         }
         Round::insert($roundEntries);
     }
