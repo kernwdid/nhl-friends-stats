@@ -1,0 +1,294 @@
+{
+  "edition": "NHL 27",
+  "retrieved_at": "2026-09-13",
+  "teams": [
+    {
+      "abbreviation": "ANA",
+      "name": "Anaheim Ducks",
+      "overall_rating": 86,
+      "offense_rating": 86,
+      "defense_rating": 84,
+      "goaltender_rating": 87,
+      "source_url": "https://www.nhlratings.net/teams/anaheim-ducks"
+    },
+    {
+      "abbreviation": "BOS",
+      "name": "Boston Bruins",
+      "overall_rating": 85,
+      "offense_rating": 88,
+      "defense_rating": 83,
+      "goaltender_rating": 84,
+      "source_url": "https://www.nhlratings.net/teams/boston-bruins"
+    },
+    {
+      "abbreviation": "BUF",
+      "name": "Buffalo Sabres",
+      "overall_rating": 86,
+      "offense_rating": 88,
+      "defense_rating": 85,
+      "goaltender_rating": 86,
+      "source_url": "https://www.nhlratings.net/teams/buffalo-sabres"
+    },
+    {
+      "abbreviation": "CGY",
+      "name": "Calgary Flames",
+      "overall_rating": 82,
+      "offense_rating": 87,
+      "defense_rating": 75,
+      "goaltender_rating": 85,
+      "source_url": "https://www.nhlratings.net/teams/calgary-flames"
+    },
+    {
+      "abbreviation": "CAR",
+      "name": "Carolina Hurricanes",
+      "overall_rating": 88,
+      "offense_rating": 90,
+      "defense_rating": 85,
+      "goaltender_rating": 88,
+      "source_url": "https://www.nhlratings.net/teams/carolina-hurricanes"
+    },
+    {
+      "abbreviation": "CHI",
+      "name": "Chicago Blackhawks",
+      "overall_rating": 83,
+      "offense_rating": 86,
+      "defense_rating": 76,
+      "goaltender_rating": 86,
+      "source_url": "https://www.nhlratings.net/teams/chicago-blackhawks"
+    },
+    {
+      "abbreviation": "COL",
+      "name": "Colorado Avalanche",
+      "overall_rating": 90,
+      "offense_rating": 93,
+      "defense_rating": 86,
+      "goaltender_rating": 90,
+      "source_url": "https://www.nhlratings.net/teams/colorado-avalanche"
+    },
+    {
+      "abbreviation": "CBJ",
+      "name": "Columbus Blue Jackets",
+      "overall_rating": 85,
+      "offense_rating": 88,
+      "defense_rating": 83,
+      "goaltender_rating": 85,
+      "source_url": "https://www.nhlratings.net/teams/columbus-blue-jackets"
+    },
+    {
+      "abbreviation": "DAL",
+      "name": "Dallas Stars",
+      "overall_rating": 87,
+      "offense_rating": 88,
+      "defense_rating": 82,
+      "goaltender_rating": 90,
+      "source_url": "https://www.nhlratings.net/teams/dallas-stars"
+    },
+    {
+      "abbreviation": "DET",
+      "name": "Detroit Red Wings",
+      "overall_rating": 87,
+      "offense_rating": 90,
+      "defense_rating": 84,
+      "goaltender_rating": 86,
+      "source_url": "https://www.nhlratings.net/teams/detroit-red-wings"
+    },
+    {
+      "abbreviation": "EDM",
+      "name": "Edmonton Oilers",
+      "overall_rating": 87,
+      "offense_rating": 91,
+      "defense_rating": 86,
+      "goaltender_rating": 84,
+      "source_url": "https://www.nhlratings.net/teams/edmonton-oilers"
+    },
+    {
+      "abbreviation": "FLA",
+      "name": "Florida Panthers",
+      "overall_rating": 88,
+      "offense_rating": 94,
+      "defense_rating": 83,
+      "goaltender_rating": 87,
+      "source_url": "https://www.nhlratings.net/teams/florida-panthers"
+    },
+    {
+      "abbreviation": "LAK",
+      "name": "Los Angeles Kings",
+      "overall_rating": 87,
+      "offense_rating": 92,
+      "defense_rating": 81,
+      "goaltender_rating": 87,
+      "source_url": "https://www.nhlratings.net/teams/los-angeles-kings"
+    },
+    {
+      "abbreviation": "MIN",
+      "name": "Minnesota Wild",
+      "overall_rating": 89,
+      "offense_rating": 90,
+      "defense_rating": 86,
+      "goaltender_rating": 91,
+      "source_url": "https://www.nhlratings.net/teams/minnesota-wild"
+    },
+    {
+      "abbreviation": "MTL",
+      "name": "Montreal Canadiens",
+      "overall_rating": 86,
+      "offense_rating": 92,
+      "defense_rating": 85,
+      "goaltender_rating": 82,
+      "source_url": "https://www.nhlratings.net/teams/montreal-canadiens"
+    },
+    {
+      "abbreviation": "NSH",
+      "name": "Nashville Predators",
+      "overall_rating": 83,
+      "offense_rating": 84,
+      "defense_rating": 80,
+      "goaltender_rating": 85,
+      "source_url": "https://www.nhlratings.net/teams/nashville-predators"
+    },
+    {
+      "abbreviation": "NJD",
+      "name": "New Jersey Devils",
+      "overall_rating": 86,
+      "offense_rating": 89,
+      "defense_rating": 85,
+      "goaltender_rating": 85,
+      "source_url": "https://www.nhlratings.net/teams/new-jersey-devils"
+    },
+    {
+      "abbreviation": "NYI",
+      "name": "New York Islanders",
+      "overall_rating": 88,
+      "offense_rating": 86,
+      "defense_rating": 85,
+      "goaltender_rating": 92,
+      "source_url": "https://www.nhlratings.net/teams/new-york-islanders"
+    },
+    {
+      "abbreviation": "NYR",
+      "name": "New York Rangers",
+      "overall_rating": 86,
+      "offense_rating": 85,
+      "defense_rating": 81,
+      "goaltender_rating": 92,
+      "source_url": "https://www.nhlratings.net/teams/new-york-rangers"
+    },
+    {
+      "abbreviation": "OTT",
+      "name": "Ottawa Senators",
+      "overall_rating": 85,
+      "offense_rating": 91,
+      "defense_rating": 81,
+      "goaltender_rating": 84,
+      "source_url": "https://www.nhlratings.net/teams/ottawa-senators"
+    },
+    {
+      "abbreviation": "PHI",
+      "name": "Philadelphia Flyers",
+      "overall_rating": 84,
+      "offense_rating": 86,
+      "defense_rating": 81,
+      "goaltender_rating": 84,
+      "source_url": "https://www.nhlratings.net/teams/philadelphia-flyers"
+    },
+    {
+      "abbreviation": "PIT",
+      "name": "Pittsburgh Penguins",
+      "overall_rating": 85,
+      "offense_rating": 90,
+      "defense_rating": 82,
+      "goaltender_rating": 84,
+      "source_url": "https://www.nhlratings.net/teams/pittsburgh-penguins"
+    },
+    {
+      "abbreviation": "SJS",
+      "name": "San Jose Sharks",
+      "overall_rating": 82,
+      "offense_rating": 84,
+      "defense_rating": 78,
+      "goaltender_rating": 84,
+      "source_url": "https://www.nhlratings.net/teams/san-jose-sharks"
+    },
+    {
+      "abbreviation": "SEA",
+      "name": "Seattle Kraken",
+      "overall_rating": 86,
+      "offense_rating": 89,
+      "defense_rating": 84,
+      "goaltender_rating": 86,
+      "source_url": "https://www.nhlratings.net/teams/seattle-kraken"
+    },
+    {
+      "abbreviation": "STL",
+      "name": "St. Louis Blues",
+      "overall_rating": 83,
+      "offense_rating": 88,
+      "defense_rating": 76,
+      "goaltender_rating": 85,
+      "source_url": "https://www.nhlratings.net/teams/st-louis-blues"
+    },
+    {
+      "abbreviation": "TBL",
+      "name": "Tampa Bay Lightning",
+      "overall_rating": 89,
+      "offense_rating": 93,
+      "defense_rating": 82,
+      "goaltender_rating": 92,
+      "source_url": "https://www.nhlratings.net/teams/tampa-bay-lightning"
+    },
+    {
+      "abbreviation": "TOR",
+      "name": "Toronto Maple Leafs",
+      "overall_rating": 87,
+      "offense_rating": 89,
+      "defense_rating": 86,
+      "goaltender_rating": 87,
+      "source_url": "https://www.nhlratings.net/teams/toronto-maple-leafs"
+    },
+    {
+      "abbreviation": "UTA",
+      "name": "Utah Mammoth",
+      "overall_rating": 86,
+      "offense_rating": 90,
+      "defense_rating": 84,
+      "goaltender_rating": 83,
+      "source_url": "https://www.nhlratings.net/teams/utah-mammoth"
+    },
+    {
+      "abbreviation": "VAN",
+      "name": "Vancouver Canucks",
+      "overall_rating": 85,
+      "offense_rating": 88,
+      "defense_rating": 79,
+      "goaltender_rating": 89,
+      "source_url": "https://www.nhlratings.net/teams/vancouver-canucks"
+    },
+    {
+      "abbreviation": "VGK",
+      "name": "Vegas Golden Knights",
+      "overall_rating": 87,
+      "offense_rating": 92,
+      "defense_rating": 86,
+      "goaltender_rating": 84,
+      "source_url": "https://www.nhlratings.net/teams/vegas-golden-knights"
+    },
+    {
+      "abbreviation": "WSH",
+      "name": "Washington Capitals",
+      "overall_rating": 86,
+      "offense_rating": 89,
+      "defense_rating": 81,
+      "goaltender_rating": 89,
+      "source_url": "https://www.nhlratings.net/teams/washington-capitals"
+    },
+    {
+      "abbreviation": "WIN",
+      "name": "Winnipeg Jets",
+      "overall_rating": 87,
+      "offense_rating": 89,
+      "defense_rating": 81,
+      "goaltender_rating": 91,
+      "source_url": "https://www.nhlratings.net/teams/winnipeg-jets"
+    }
+  ]
+}

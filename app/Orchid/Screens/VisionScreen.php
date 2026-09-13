@@ -17,7 +17,6 @@ use Orchid\Screen\Action;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Layout;
 use Orchid\Screen\Screen;
-use function DeepCopy\deep_copy;
 
 class VisionScreen extends Screen
 {
@@ -59,17 +58,21 @@ class VisionScreen extends Screen
         $data = $request->validate([
             '*' => 'required',
             'game_result' => 'exclude',
+            '_token' => 'exclude',
+            '_state' => 'exclude',
+            'view_result' => 'exclude',
+            'detection_percentage' => 'exclude',
         ]);
 
         $roundId = null;
         if (array_key_exists('round_id', $data)) {
-            $roundId = deep_copy($data['round_id']);
+            $roundId = $data['round_id'];
             unset($data['round_id']);
         }
 
         $tournamentId = null;
         if (array_key_exists('tournament_id', $data)) {
-            $tournamentId = deep_copy($data['tournament_id']);
+            $tournamentId = $data['tournament_id'];
             unset($data['tournament_id']);
         }
 
@@ -99,13 +102,13 @@ class VisionScreen extends Screen
             $data['powerplay_time_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($data['powerplay_time_away_in_seconds']);
         }
 
-        $game = new Game($data);
-        $game->save();
-
-        if ($roundId) {
-            $round = Round::find($roundId);
-            $round->game_id = $game->id;
-            $round->save();
+        if ($roundId || $tournamentId) {
+            abort_unless($roundId && $tournamentId, 422);
+            app(\App\Services\TournamentResult::class)->save(
+                (int) $tournamentId, (int) $roundId, (int) $request->user()->id, $data
+            );
+        } else {
+            Game::create($data);
         }
 
         if ($tournamentId) {

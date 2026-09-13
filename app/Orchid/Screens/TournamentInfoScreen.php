@@ -15,28 +15,20 @@ use Orchid\Support\Facades\Layout;
 
 class TournamentInfoScreen extends Screen
 {
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
-        $this->tournament = Tournament::findOrFail($this->request->route('id'));
-        $this->currentRound = Round::select(DB::raw(
-            "MIN(round)",
-        ))
-            ->whereNull('game_id')
-            ->where('tournament_id', $this->tournament->id)
-            ->groupBy('round')
-            ->orderBy('round', 'ASC')
-            ->pluck('min')
-            ->first();
-    }
+    protected Request $request;
+    protected Tournament $tournament;
+    protected ?int $currentRound = null;
 
     /**
      * Fetch data to be displayed on the screen.
      *
      * @return array
      */
-    public function query(): iterable
+    public function query(Request $request): iterable
     {
+        $this->request = $request;
+        $this->tournament = Tournament::findOrFail($request->route('id'));
+        $this->currentRound = app(\App\Services\RoundTeamAssignment::class)->startCurrentRound($this->tournament->id);
         $leaderboard = [];
         foreach ($this->tournament->players as $player) {
             $stats = Round::select(DB::raw("

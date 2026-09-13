@@ -13,7 +13,16 @@ use Orchid\Screen\TD;
 
 class TournamentPreviousRoundsScreen extends Screen
 {
-    public function __construct(Request $request)
+    protected Tournament $tournament;
+    protected $rounds;
+    protected array $roundData = [];
+
+    /**
+     * Fetch data to be displayed on the screen.
+     *
+     * @return array
+     */
+    public function query(Request $request): iterable
     {
         $this->tournament = Tournament::findOrFail($request->route('id'));
         $this->rounds = Round::where('tournament_id', $request->route('id'))
@@ -25,21 +34,12 @@ class TournamentPreviousRoundsScreen extends Screen
             ->with('away_user')
             ->with('game')
             ->get();
-    }
 
-
-    /**
-     * Fetch data to be displayed on the screen.
-     *
-     * @return array
-     */
-    public function query(): iterable
-    {
         $query = [];
         foreach($this->rounds as $round) {
             $query['round' . $round->round][] = new Repository($round->toArray());
         }
-        $this->query = $query;
+        $this->roundData = $query;
         return $query;
     }
 
@@ -70,7 +70,8 @@ class TournamentPreviousRoundsScreen extends Screen
      */
     public function layout(): iterable
     {
-        for($i = 0; $i < count($this->query); $i++) {
+        $content = [];
+        for($i = 0; $i < count($this->roundData); $i++) {
             $content[] = Layout::table('round' . ($i + 1), [
                 TD::make('home_user', __('games.home'))->render(function (Repository $repository) {
                     return $repository->get('home_user')['name'];

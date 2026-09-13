@@ -5,7 +5,13 @@ namespace App\Http\Controllers;
 use App\Helpers\DateHelper;
 use App\Models\Team;
 use Google\Cloud\Core\Exception\GoogleException;
-use Google\Cloud\Vision\V1\ImageAnnotatorClient;
+use Google\ApiCore\ApiException;
+use Google\Cloud\Vision\V1\Client\ImageAnnotatorClient;
+use Google\Cloud\Vision\V1\AnnotateImageRequest;
+use Google\Cloud\Vision\V1\BatchAnnotateImagesRequest;
+use Google\Cloud\Vision\V1\Feature;
+use Google\Cloud\Vision\V1\Feature\Type;
+use Google\Cloud\Vision\V1\Image;
 
 class VisionController extends Controller
 {
@@ -18,7 +24,17 @@ class VisionController extends Controller
 
             if ($imageContent !== '') {
                 $imageAnnotator = new ImageAnnotatorClient();
-                $response = $imageAnnotator->textDetection($imageContent);
+                $batch = $imageAnnotator->batchAnnotateImages(new BatchAnnotateImagesRequest([
+                    'requests' => [new AnnotateImageRequest([
+                        'image' => new Image(['content' => $imageContent]),
+                        'features' => [new Feature(['type' => Type::TEXT_DETECTION])],
+                    ])],
+                ]));
+                $response = $batch->getResponses()[0] ?? null;
+                if ($response === null || ($response->hasError() && $response->getError()->getCode() !== 0)) {
+                    $imageAnnotator->close();
+                    return 'Image text detection failed.';
+                }
                 $texts = $response->getTextAnnotations();
                 foreach ($texts as $key => $text) {
                     if ($key === 0) {
@@ -35,6 +51,9 @@ class VisionController extends Controller
                 }
                 $imageAnnotator->close();
 
+                if ($result === []) {
+                    return 'No text detected in this image.';
+                }
                 $threshold = $this->calculateThresholdValue($result, 3);
 
                 $leftCluster = [];
@@ -68,7 +87,7 @@ class VisionController extends Controller
 
                 return $this->fieldPatternRecognition($mergeSides);
             }
-        } catch (GoogleException $googleException) {
+        } catch (GoogleException|ApiException $googleException) {
             return 'Received exception: ' . $googleException->getMessage();
         }
 

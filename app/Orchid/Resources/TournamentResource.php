@@ -8,7 +8,6 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 use Orchid\Crud\Filters\DefaultSorted;
 use Orchid\Crud\Resource;
 use Orchid\Crud\ResourceRequest;
@@ -16,7 +15,9 @@ use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Sight;
 use Orchid\Screen\TD;
-use function DeepCopy\deep_copy;
+use App\Services\TournamentSchedule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TournamentResource extends Resource
 {
@@ -105,77 +106,45 @@ class TournamentResource extends Resource
 
     public function onSave(ResourceRequest $request, Model $model): void
     {
-        $tournament = $request->all();
-        $tournamentCopy = deep_copy($tournament);
-        unset($tournamentCopy['players']);
-        $saved = $model->forceFill($tournamentCopy)->save();
-
-        if (!$saved) {
-            Log::error("Insert of tournament failed");
-            exit(1);
-        }
-        $model->players()->attach($tournament['players']);
-
-        $teamGraph = $this->createTournamentGraph();
-        $calculatedTournamentOptions = $this->calculatePossibleMatches($teamGraph, $tournament['max_team_overall_rating_difference']);
-
-        $teamMatches = $calculatedTournamentOptions['matches'];
-        shuffle($teamMatches);
-
-        $players = $tournament['players'];
-        $playerPairings = [];
-
-        if (count($players) % 2 !== 0) {
-            $players[] = null;
-        }
-
-        $playerCount = count($players);
-        $rounds = $playerCount - 1;
-
-        for ($r = 0; $r < $rounds; $r++) {
-            for ($i = 0; $i < $playerCount / 2; $i++) {
-                $player1 = $players[$i];
-                $player2 = $players[$playerCount - 1 - $i];
-
-                if ($player1 !== null && $player2 !== null) {
-                    $playerPairings[] = [$player1, $player2];
-                }
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'total_games_per_player' => 'required|integer|min:1|max:100',
+            'rounds' => 'required|integer|min:1',
+            'max_team_overall_rating_difference' => 'required|integer|min:0|max:99',
+            'players' => 'required|array|min:2',
+            'players.*' => 'required|integer|distinct|exists:users,id',
+        ]);
+        if ($model->exists) {
+            // Editing a name must never regenerate published fixtures.
+            if ((int) $data['total_games_per_player'] !== (int) $model->total_games_per_player ||
+                (int) $data['rounds'] !== (int) $model->rounds ||
+                (int) $data['max_team_overall_rating_difference'] !== (int) $model->max_team_overall_rating_difference ||
+                array_diff($data['players'], $model->players()->pluck('users.id')->all()) ||
+                count($data['players']) !== $model->players()->count()) {
+                throw ValidationException::withMessages(['players' => 'Tournament settings cannot change after fixtures have been created.']);
             }
-
-            $firstPlayer = $players[0];
-            $rotatingPlayers = array_slice($players, 1);
-            $lastPlayer = array_pop($rotatingPlayers);
-            array_unshift($rotatingPlayers, $lastPlayer);
-            $players = array_merge([$firstPlayer], $rotatingPlayers);
+            $model->name = $data['name'];
+            $model->save();
+            return;
         }
-
-        shuffle($playerPairings); // Randomize the order of fair matches
-
-        $roundEntries = [];
-        $gamesToSchedule = $tournament['total_games_per_player'] * count($tournament['players']) / 2;
-        $gamesScheduled = 0;
-        $round = 1;
-        $gamesPerRound = $gamesToSchedule / $tournament['rounds'];;
-
-        for ($i = 0; $i < $gamesToSchedule; $i++) {
-            $currentPlayers = $playerPairings[$i % count($playerPairings)];
-            $currentTeams = $teamMatches[$i % count($teamMatches)];
-
-            $roundEntries[] = [
-                'round' => $round,
-                'home_team_id' => $currentTeams[0],
-                'away_team_id' => $currentTeams[1],
-                'home_user_id' => intval($currentPlayers[0]),
-                'away_user_id' => intval($currentPlayers[1]),
-                'tournament_id' => $model->id
-            ];
-            $gamesScheduled += 1;
-
-            if ($gamesScheduled % $gamesPerRound == 0 && $gamesScheduled < $gamesToSchedule) {
-                $round += 1;
+        try {
+            $fixtures = app(TournamentSchedule::class)->generate(
+                $data['players'], (int) $data['total_games_per_player'], (int) $data['rounds']
+            );
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages(['total_games_per_player' => $exception->getMessage()]);
+        }
+        DB::transaction(function () use ($model, $data, $fixtures) {
+            $players = $data['players'];
+            unset($data['players']);
+            $model->forceFill($data)->saveOrFail();
+            $model->players()->attach($players);
+            foreach ($fixtures as &$fixture) {
+                $fixture['tournament_id'] = $model->id;
             }
-        }
-        Round::insert($roundEntries);
+            unset($fixture);
+            Round::insert($fixtures);
+        });
     }
 
     public static function displayInNavigation(): bool
@@ -200,78 +169,4 @@ class TournamentResource extends Resource
         ];
     }
 
-    private function createTournamentGraph(): array
-    {
-        $graph = [];
-
-        // Assuming Team::all() returns a collection of Team objects
-        $teams = Team::whereNot('division', 'NONE')->get();
-
-        $teamsArray = $teams->map(function ($team) {
-            return $team->toArray();
-        })->all();
-
-        $teamIds = array_column($teamsArray, 'id');
-
-
-        foreach ($teamsArray as $team) {
-            // Create an array of team IDs excluding the current team
-            $opponents = array_diff($teamIds, [$team['id']]);
-
-            // Add the team and its opponents to the graph
-            $graph[$team['id']] = $opponents;
-        }
-
-        return $graph;
-    }
-
-    private function calculatePossibleMatches(&$graph, $maxDifference): array
-    {
-        $tournament = ['matches' => [], 'team_occurrences' => []];
-        $preventTeamSwaps = [];
-
-        $teams = Team::whereNot('division', 'NONE')->get()->map(function ($team) {
-            return $team->toArray();
-        })->all();
-
-        usort($teams, function ($a, $b) {
-            return $b['overall_rating'] - $a['overall_rating'];
-        });
-
-        foreach ($teams as $team) {
-            $possibleOpponents = $graph[$team['id']];
-
-            usort($possibleOpponents, function ($a, $b) use ($teams, $team) {
-                $keyA = array_search($a, array_column($teams, 'id'));
-                $keyB = array_search($b, array_column($teams, 'id'));
-
-                return abs($teams[$keyA]['overall_rating'] - $team['overall_rating']) - abs($teams[$keyB]['overall_rating'] - $team['overall_rating']);
-            });
-
-            foreach ($possibleOpponents as $opponent) {
-                $opponentTeam = $teams[array_search($opponent, array_column($teams, 'id'))];
-                if (abs($team['overall_rating'] - $opponentTeam['overall_rating']) <= $maxDifference) {
-                    if (!in_array($team['id'] . $opponentTeam['id'], $preventTeamSwaps)) {
-                        $preventTeamSwaps[] = $team['id'] . $opponentTeam['id'];
-                        $preventTeamSwaps[] = $opponentTeam['id'] . $team['id'];
-
-                        if (array_key_exists($team['id'], $tournament['team_occurrences'])) {
-                            $tournament['team_occurrences'][$team['id']] += 1;
-                        } else {
-                            $tournament['team_occurrences'][$team['id']] = 1;
-                        }
-
-                        if (array_key_exists($opponentTeam['id'], $tournament['team_occurrences'])) {
-                            $tournament['team_occurrences'][$opponentTeam['id']] += 1;
-                        } else {
-                            $tournament['team_occurrences'][$opponentTeam['id']] = 1;
-                        }
-
-                        $tournament['matches'][] = [$team['id'], $opponentTeam['id']];
-                    }
-                }
-            }
-        }
-        return $tournament;
-    }
 }
