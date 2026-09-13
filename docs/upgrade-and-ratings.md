@@ -32,7 +32,7 @@ php artisan teams:sync-ratings --file=database/data/nhl27-ratings-2026-09-13.jso
 php artisan teams:sync-ratings --file=database/data/nhl27-ratings-2026-09-13.json
 ~~~
 
-The source must remain accessible and retain its NHL 27 page format. Direct HTTP access returned 403 during development, although the snapshot pages could be verified through web browsing. Test access from the deployment host; monitor the command's failure exit status and Laravel log. A blocked request, wrong edition, invalid rating, missing team or incomplete dataset leaves all previous ratings intact. A reviewed JSON import is available when automated access is blocked.
+The source must remain accessible and retain its NHL 27 page format. The initial Python urllib probe returned 403 because the source rejects that client identifier: controlled requests with Python-urllib/3.11 returned 403, while Guzzle and the explicit NHLFriendsStats identifier returned 200. The actual Laravel importer successfully fetched all 32 teams on 2026-09-13. It now identifies itself as NHLFriendsStats/1.0 and requests HTML explicitly. Test access from the deployment host as access rules can also depend on its IP; monitor the command's failure exit status and Laravel log. A blocked request, wrong edition, invalid rating, missing team or incomplete dataset leaves all previous ratings intact. A reviewed JSON import is available when automated access is blocked.
 
 ## Round behavior
 

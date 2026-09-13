@@ -72,6 +72,14 @@ class TeamRatingSyncTest extends TestCase
         }
         Http::fake($responses);
         $this->artisan('teams:sync-ratings')->assertSuccessful();
+        Http::assertSentCount(32);
+        foreach (Http::recorded() as [$request]) {
+            $this->assertSame(
+                ['NHLFriendsStats/1.0 (+https://github.com/kernwdid/nhl-friends-stats)'],
+                $request->header('User-Agent')
+            );
+            $this->assertSame(['text/html'], $request->header('Accept'));
+        }
         $this->assertSame(32, Team::where('overall_rating', 86)->count());
     }
 

@@ -1,4 +1,4 @@
-<div class="h2 fw-light d-flex align-items-center">
+<div class="h3 fw-light d-flex align-items-center">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="1.2em" height="1.2em" role="img"
              fill="currentColor" path="orchid" componentname="orchid-icon">
             <path

@@ -16,7 +16,10 @@ class TeamRatingSync
         $reference = json_decode(file_get_contents(database_path('data/nhl27-ratings-2026-09-13.json')), true, 512, JSON_THROW_ON_ERROR);
         $rows = [];
         foreach ($reference['teams'] as $team) {
-            $html = Http::connectTimeout(5)->timeout(15)->get($team['source_url'])->throw()->body();
+            $html = Http::withUserAgent('NHLFriendsStats/1.0 (+https://github.com/kernwdid/nhl-friends-stats)')
+                ->accept('text/html')
+                ->connectTimeout(5)->timeout(15)
+                ->get($team['source_url'])->throw()->body();
             $text = preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($html)));
             if (! str_contains($text, $team['name'].' on NHL 27') ||
                 ! preg_match('/Team Overall Rating of\s+(\d+)\s*\(OFF:\s*(\d+),\s*DEF:\s*(\d+),\s*GOA:\s*(\d+)\)/', $text, $matches)) {
