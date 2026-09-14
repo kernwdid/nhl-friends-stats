@@ -168,6 +168,8 @@ class ResultUploadListenerTest extends TestCase
                 ]];
             }
         }
+        // The OCR can report the right goal both inside "4-3" and separately.
+        $annotations[] = ['text' => '3', 'vertices' => [[590, 100], [610, 100], [610, 120], [590, 120]]];
         $ocr = (new NhlResultParser)->parse($annotations, ['WIN' => 41, 'TBL' => 42]);
         $this->assertSame(41, $ocr['home_team_id']);
         $this->assertSame(100.0, $ocr['detection_percentage']);

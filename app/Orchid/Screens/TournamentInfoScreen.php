@@ -68,12 +68,14 @@ class TournamentInfoScreen extends Screen
                 'name' => $player->name,
                 'games_played' => $gamesPlayed,
                 'points' => $stats['points'] ?? 0,
+                'goal_difference' => ($stats['goals_scored'] ?? 0) - ($stats['goals_received'] ?? 0),
                 'goals' => ($stats['goals_scored'] ?? 0) . ":" . ($stats['goals_received'] ?? 0)
             ]);
         }
 
         usort($leaderboard, function ($a, $b) {
-            return $b['points'] - $a['points'];
+            return ($b['points'] <=> $a['points'])
+                ?: ($b['goal_difference'] <=> $a['goal_difference']);
         });
 
         $index = 1;

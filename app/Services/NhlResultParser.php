@@ -124,8 +124,8 @@ class NhlResultParser
                 // within adjacent tokens rather than requiring an otherwise empty row.
                 for ($start = 0; $start < count($remaining); $start++) {
                     for ($length = 1; $length <= 3 && $start + $length <= count($remaining); $length++) {
-                        $score = preg_replace('/\s+/u', '', implode('', array_slice($remaining, $start, $length)));
-                        if (preg_match('/^(\d{1,2})[-–—](\d{1,2})$/u', $score, $match)
+                        $score = trim(implode(' ', array_slice($remaining, $start, $length)));
+                        if (preg_match('/^(\d{1,2})\s*[-–—]\s*(\d{1,2})$/u', $score, $match)
                             && (int) $match[1] <= 50 && (int) $match[2] <= 50) {
                             $candidates['goals_away'][] = (int) $match[1];
                             $candidates['goals_home'][] = (int) $match[2];

@@ -170,4 +170,34 @@ class TournamentRoundsTest extends TestCase
         $this->assertSame($before, Round::get()->toArray());
         $this->assertSame('Renamed', $tournament->fresh()->name);
     }
+
+    public function test_leaderboard_breaks_points_ties_by_goal_difference(): void
+    {
+        $this->ratings();
+        $tournament = $this->tournament();
+        $players = $tournament->players()->orderBy('users.id')->get();
+        $fixtures = Round::where('tournament_id', $tournament->id)->orderBy('id')->get();
+        foreach ([[0, 1, 3, 2], [2, 3, 5, 0]] as $index => [$home, $away, $goalsHome, $goalsAway]) {
+            $game = Game::factory()->create([
+                'home_user_id' => $players[$home]->id, 'away_user_id' => $players[$away]->id,
+                'goals_home' => $goalsHome, 'goals_away' => $goalsAway, 'win_type' => 'regular',
+            ]);
+            $fixtures[$index]->forceFill([
+                'game_id' => $game->id, 'home_user_id' => $players[$home]->id, 'away_user_id' => $players[$away]->id,
+            ])->save();
+        }
+        $this->mock(RoundTeamAssignment::class)->shouldReceive('startCurrentRound')->andReturn(null);
+        foreach (['', '?sort=-points'] as $suffix) {
+            $request = \Illuminate\Http\Request::create('/tournament-info/'.$tournament->id.$suffix);
+            $route = new \Illuminate\Routing\Route('GET', 'tournament-info/{id}', fn () => null);
+            $route->bind($request);
+            $request->setRouteResolver(fn () => $route);
+            $data = (new \App\Orchid\Screens\TournamentInfoScreen)->query($request);
+            $this->assertSame(
+                [$players[2]->name, $players[0]->name, $players[1]->name, $players[3]->name],
+                array_map(fn ($entry) => $entry['name'], $data['leaderboard'])
+            );
+            $this->assertSame([1, 2, 3, 4], array_map(fn ($entry) => $entry['index'], $data['leaderboard']));
+        }
+    }
 }

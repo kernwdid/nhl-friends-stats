@@ -115,4 +115,16 @@ class NhlResultParserTest extends TestCase
         $this->assertSame(19, $result['shots_home'] ?? null);
         $this->assertSame(100.0, $result['detection_percentage']);
     }
+
+    public function test_split_score_and_conflicting_scores(): void
+    {
+        $rows = $this->row('TOTAL SHOTS', '20', '21', 100);
+        $split = [$this->token('4', 400, 30, 20), $this->token('-', 430, 30, 10), $this->token('3', 450, 30, 20)];
+        $result = (new NhlResultParser)->parse([...$split, ...$rows]);
+        $this->assertSame(4, $result['goals_away']);
+        $this->assertSame(3, $result['goals_home']);
+        $result = (new NhlResultParser)->parse([$this->token('4-3', 400, 30), $this->token('4-2', 500, 30), ...$rows]);
+        $this->assertArrayNotHasKey('goals_away', $result);
+        $this->assertArrayNotHasKey('goals_home', $result);
+    }
 }
