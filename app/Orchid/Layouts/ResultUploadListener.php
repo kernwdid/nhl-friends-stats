@@ -7,6 +7,8 @@ use App\Models\Round;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Orchid\Screens\VisionScreen;
+use App\Services\NhlResultParser;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -21,39 +23,13 @@ use Orchid\Support\Facades\Layout;
 
 class ResultUploadListener extends Listener
 {
-    /**
-     * List of field names for which values will be joined with targets' upon trigger.
-     *
-     * @var array<string>
-     */
-    protected $extraVars = [];
-
-    /**
-     * List of field names for which values will be listened.
-     *
-     * @var array<string>
-     */
     protected $targets = [
         'game_result',
     ];
 
-    /**
-     * What screen method should be called
-     * as a source for an asynchronous request.
-     *
-     * The name of the method must
-     * begin with the prefix "async"
-     *
-     * @var string
-     */
-    protected $asyncMethod = 'processResult';
-
-    /**
-     * @return iterable<Layout>
-     */
     protected function layouts(): iterable
     {
-        $queryParams = $this->query->get('query');
+        $queryParams = $this->query->get('query', []);
         $fields = [];
         $totalAttachments = Attachment::where('created_at', Carbon::now()->subMonth()->toDateTimeString())->count();
 
@@ -81,7 +57,7 @@ class ResultUploadListener extends Listener
         $parseSeconds = function () {
             $value = $this->get('value');
             if (is_numeric($value)) {
-                $this->query->set('value', DateHelper::minuteAndSecondFormatFromSeconds($value));
+                $this->set('value', DateHelper::minuteAndSecondFormatFromSeconds($value));
             }
         };
 
@@ -185,8 +161,7 @@ class ResultUploadListener extends Listener
                 ->required()
                 ->title(__('games.time_in_offense_home_in_seconds'))
                 ->addBeforeRender($parseSeconds)
-                ->mask('99:99')
-                ->runBeforeRender(),
+                ->mask('99:99'),
             Input::make('pass_percentage_away')
                 ->required()
                 ->step(0.1)
@@ -289,18 +264,38 @@ class ResultUploadListener extends Listener
             }
         }
 
-
         return [
             Layout::rows($fields),
         ];
     }
 
-
-
     public function handle(Repository $repository, Request $request): Repository
     {
-        [$gameResult] = $request->all();
+        foreach (['home_user_id', 'away_user_id', 'win_type'] as $field) {
+            if ($request->has($field)) {
+                $repository->set($field, $request->input($field));
+            }
+        }
+        $attachmentId = $request->input('game_result');
+        if (! is_scalar($attachmentId) || ! ctype_digit((string) $attachmentId) || (int) $attachmentId < 1) {
+            return $repository;
+        }
 
-        return $repository->set('game_result', $gameResult);
+        $result = app(VisionScreen::class)->processResult((int) $attachmentId);
+        $locked = $repository->get('query', []);
+        // Clear the previous image's statistics, including values not detected in
+        // the replacement, so two screenshots cannot silently become one result.
+        foreach (NhlResultParser::fields() as $field) {
+            $repository->set($field, is_array($result) ? ($result[$field] ?? null) : null);
+        }
+        foreach (['home_team_id', 'away_team_id'] as $field) {
+            if (isset($locked[$field]) && is_numeric($locked[$field])) {
+                $repository->set($field, $locked[$field]);
+            }
+        }
+        $repository->set('view_result', is_array($result) ? ($result['view_result'] ?? '') : $result);
+        $repository->set('detection_percentage', is_array($result) ? ($result['detection_percentage'] ?? 0) : 0);
+
+        return $repository->set('game_result', $attachmentId);
     }
 }

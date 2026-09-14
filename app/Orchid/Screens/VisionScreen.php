@@ -5,8 +5,8 @@ namespace App\Orchid\Screens;
 use App\Helpers\DateHelper;
 use App\Http\Controllers\VisionController;
 use App\Models\Game;
-use App\Models\Round;
 use App\Orchid\Layouts\ResultUploadListener;
+use App\Services\TournamentResult;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +20,9 @@ use Orchid\Screen\Screen;
 
 class VisionScreen extends Screen
 {
+    // Orchid persists public properties in its encrypted asynchronous state.
+    public array $query = [];
+
     /**
      * Fetch data to be displayed on the screen.
      *
@@ -32,8 +35,6 @@ class VisionScreen extends Screen
 
     /**
      * The name of the screen displayed in the header.
-     *
-     * @return string|null
      */
     public function name(): ?string
     {
@@ -104,7 +105,7 @@ class VisionScreen extends Screen
 
         if ($roundId || $tournamentId) {
             abort_unless($roundId && $tournamentId, 422);
-            app(\App\Services\TournamentResult::class)->save(
+            app(TournamentResult::class)->save(
                 (int) $tournamentId, (int) $roundId, (int) $request->user()->id, $data
             );
         } else {
@@ -112,7 +113,7 @@ class VisionScreen extends Screen
         }
 
         if ($tournamentId) {
-            return redirect('/tournament-info/' . $tournamentId);
+            return redirect('/tournament-info/'.$tournamentId);
         }
 
         return redirect('/');
@@ -123,16 +124,17 @@ class VisionScreen extends Screen
         $attachment = Attachment::find($attachmentId);
 
         if ($attachment) {
-            $path = $attachment->path . $attachment->name . '.' . $attachment->extension;
+            $path = $attachment->path.$attachment->name.'.'.$attachment->extension;
             $fileContent = Storage::disk($attachment->disk)->get($path);
 
-            $visionController = new VisionController();
+            $visionController = app(VisionController::class);
             $res = $visionController->getNHLResultFromImage($fileContent);
 
-            Storage::delete($path);
+            Storage::disk($attachment->disk)->delete($path);
 
             return $res;
         }
+
         return [];
     }
 
