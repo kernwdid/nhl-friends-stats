@@ -4,7 +4,7 @@
 Since it is not possible to track NHL Online Versus Games (unranked) against friends,
 I created a web application to track all the scores, create tournaments and show some statistics for you and your friends.
 
-Current team stats taken from September 2026 but can be adjusted to your liking.
+NEW: Team statistics are updated every day from www.nhlratings.net. In tournaments new ratings are taken into account for new rounds. See "Get daily team statistics update" section for the installation.
 
 Feel free to use it and if you want to collaborate or have any questions, contact me at any time.
 
@@ -55,3 +55,20 @@ Since it is free to use OCR up to 1000 images per month, we stop the upload feat
 If you want to change it, you can set the env variable `GC_OCR_ANALYZING_LIMIT` to your liking.
 
 For the stats identification I used clustering and similarity algorithms combined with regular expressions.
+
+## Get daily team statistics update
+
+The Laravel scheduler runs teams:sync-ratings daily at 06:00 in the application's timezone, without overlapping. Enable the normal scheduler on the application server:
+
+~~~cron
+* * * * * cd /path/to/application && php artisan schedule:run >> /dev/null 2>&1
+~~~
+
+Run manually or import a reviewed file using the bundled JSON structure:
+
+~~~sh
+php artisan teams:sync-ratings --dry-run
+php artisan teams:sync-ratings
+php artisan teams:sync-ratings --file=database/data/nhl27-ratings-2026-09-13.json --dry-run
+php artisan teams:sync-ratings --file=database/data/nhl27-ratings-2026-09-13.json
+~~~
