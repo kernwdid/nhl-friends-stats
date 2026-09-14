@@ -5,8 +5,8 @@ namespace App\Orchid\Screens;
 use App\Helpers\DateHelper;
 use App\Http\Controllers\VisionController;
 use App\Models\Game;
-use App\Models\Round;
 use App\Orchid\Layouts\ResultUploadListener;
+use App\Services\TournamentResult;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,10 +17,12 @@ use Orchid\Screen\Action;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Layout;
 use Orchid\Screen\Screen;
-use function DeepCopy\deep_copy;
 
 class VisionScreen extends Screen
 {
+    // Orchid persists public properties in its encrypted asynchronous state.
+    public array $query = [];
+
     /**
      * Fetch data to be displayed on the screen.
      *
@@ -33,8 +35,6 @@ class VisionScreen extends Screen
 
     /**
      * The name of the screen displayed in the header.
-     *
-     * @return string|null
      */
     public function name(): ?string
     {
@@ -59,17 +59,21 @@ class VisionScreen extends Screen
         $data = $request->validate([
             '*' => 'required',
             'game_result' => 'exclude',
+            '_token' => 'exclude',
+            '_state' => 'exclude',
+            'view_result' => 'exclude',
+            'detection_percentage' => 'exclude',
         ]);
 
         $roundId = null;
         if (array_key_exists('round_id', $data)) {
-            $roundId = deep_copy($data['round_id']);
+            $roundId = $data['round_id'];
             unset($data['round_id']);
         }
 
         $tournamentId = null;
         if (array_key_exists('tournament_id', $data)) {
-            $tournamentId = deep_copy($data['tournament_id']);
+            $tournamentId = $data['tournament_id'];
             unset($data['tournament_id']);
         }
 
@@ -99,17 +103,17 @@ class VisionScreen extends Screen
             $data['powerplay_time_away_in_seconds'] = DateHelper::getSecondsFromMinutesAndSeconds($data['powerplay_time_away_in_seconds']);
         }
 
-        $game = new Game($data);
-        $game->save();
-
-        if ($roundId) {
-            $round = Round::find($roundId);
-            $round->game_id = $game->id;
-            $round->save();
+        if ($roundId || $tournamentId) {
+            abort_unless($roundId && $tournamentId, 422);
+            app(TournamentResult::class)->save(
+                (int) $tournamentId, (int) $roundId, (int) $request->user()->id, $data
+            );
+        } else {
+            Game::create($data);
         }
 
         if ($tournamentId) {
-            return redirect('/tournament-info/' . $tournamentId);
+            return redirect('/tournament-info/'.$tournamentId);
         }
 
         return redirect('/');
@@ -120,16 +124,17 @@ class VisionScreen extends Screen
         $attachment = Attachment::find($attachmentId);
 
         if ($attachment) {
-            $path = $attachment->path . $attachment->name . '.' . $attachment->extension;
+            $path = $attachment->path.$attachment->name.'.'.$attachment->extension;
             $fileContent = Storage::disk($attachment->disk)->get($path);
 
-            $visionController = new VisionController();
+            $visionController = app(VisionController::class);
             $res = $visionController->getNHLResultFromImage($fileContent);
 
-            Storage::delete($path);
+            Storage::disk($attachment->disk)->delete($path);
 
             return $res;
         }
+
         return [];
     }
 

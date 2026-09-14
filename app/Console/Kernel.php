@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('teams:sync-ratings')->dailyAt('06:00')->withoutOverlapping(30);
     }
 
     /**
