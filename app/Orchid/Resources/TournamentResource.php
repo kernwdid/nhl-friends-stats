@@ -7,17 +7,18 @@ use App\Models\Round;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Services\TournamentSchedule;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Orchid\Crud\Filters\DefaultSorted;
 use Orchid\Crud\Resource;
 use Orchid\Crud\ResourceRequest;
+use Orchid\Screen\Fields\CheckBox;
 use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Sight;
 use Orchid\Screen\TD;
-use App\Services\TournamentSchedule;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class TournamentResource extends Resource
 {
@@ -30,12 +31,12 @@ class TournamentResource extends Resource
 
     /**
      * Get the fields displayed by the resource.
-     *
-     * @return array
      */
     public function fields(): array
     {
         return [
+            CheckBox::make('archived')->title('Archiviert')->sendTrueOrFalse()
+                ->help('Abgeschlossene Turniere archivieren: Ergebnisse bleiben erhalten, zählen aber nicht mehr im Dashboard.'),
             Input::make('name')
                 ->title('Name')
                 ->required(),
@@ -71,16 +72,17 @@ class TournamentResource extends Resource
     {
         return [
             TD::make('id', 'ID'),
+            TD::make('archived', 'Status')->render(fn ($model) => $model->archived ? 'Archiviert' : 'Nicht archiviert'),
             TD::make('name')->render(function ($model) {
-                return '<a href="/tournament-info/' . $model->id . '?sort=-points">' . $model->name . '</a>';
+                return '<a href="/tournament-info/'.$model->id.'?sort=-points">'.$model->name.'</a>';
             })->sort(),
             TD::make('created_at', __('general.created_at'))
                 ->render(function ($model) {
-                    return DateHelper::formatDateTime($model->created_at->toDateTimeString()) . ' ' . __('general.oclock');
+                    return DateHelper::formatDateTime($model->created_at->toDateTimeString()).' '.__('general.oclock');
                 }),
             TD::make('updated_at', __('general.updated_at'))
                 ->render(function ($model) {
-                    return DateHelper::formatDateTime($model->updated_at->toDateTimeString()) . ' ' . __('general.oclock');
+                    return DateHelper::formatDateTime($model->updated_at->toDateTimeString()).' '.__('general.oclock');
                 }),
         ];
     }
@@ -94,13 +96,14 @@ class TournamentResource extends Resource
     {
         return [
             Sight::make('name'),
+            Sight::make('archived', 'Status')->render(fn ($model) => $model->archived ? 'Archiviert' : 'Nicht archiviert'),
             Sight::make('total_games_per_player', __('tournaments.total_games_per_player')),
             Sight::make('rounds', __('tournaments.rounds')),
             Sight::make('max_team_overall_rating_difference', __('tournaments.max_team_overall_rating_difference')),
             Sight::make('players', __('tournaments.players'))->render(function ($tournament) {
 
                 return count($tournament->players) > 0 ? implode(', ', array_column($tournament->players->toArray(), 'name')) : '';
-            })
+            }),
         ];
     }
 
@@ -108,12 +111,18 @@ class TournamentResource extends Resource
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
+            'archived' => 'sometimes|boolean',
             'total_games_per_player' => 'required|integer|min:1|max:100',
             'rounds' => 'required|integer|min:1',
             'max_team_overall_rating_difference' => 'required|integer|min:0|max:99',
             'players' => 'required|array|min:2',
             'players.*' => 'required|integer|distinct|exists:users,id',
         ]);
+        if (! empty($data['archived']) && (! $model->exists
+            || ! Round::where('tournament_id', $model->id)->exists()
+            || Round::where('tournament_id', $model->id)->whereNull('game_id')->exists())) {
+            throw ValidationException::withMessages(['archived' => 'Nur abgeschlossene Turniere können archiviert werden.']);
+        }
         if ($model->exists) {
             // Editing a name must never regenerate published fixtures.
             if ((int) $data['total_games_per_player'] !== (int) $model->total_games_per_player ||
@@ -124,7 +133,11 @@ class TournamentResource extends Resource
                 throw ValidationException::withMessages(['players' => 'Tournament settings cannot change after fixtures have been created.']);
             }
             $model->name = $data['name'];
+            if (array_key_exists('archived', $data)) {
+                $model->archived = (bool) $data['archived'];
+            }
             $model->save();
+
             return;
         }
         try {
@@ -159,8 +172,6 @@ class TournamentResource extends Resource
 
     /**
      * Get the filters available for the resource.
-     *
-     * @return array
      */
     public function filters(): array
     {
@@ -168,5 +179,4 @@ class TournamentResource extends Resource
             new DefaultSorted('name', 'asc'),
         ];
     }
-
 }

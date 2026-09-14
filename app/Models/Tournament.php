@@ -10,9 +10,12 @@ use Orchid\Screen\AsSource;
 
 class Tournament extends Model
 {
-    use HasFactory, Filterable, AsSource;
+    use AsSource, Filterable, HasFactory;
 
-    public function players(): BelongsToMany {
+    protected $casts = ['archived' => 'boolean'];
+
+    public function players(): BelongsToMany
+    {
         return $this->belongsToMany(User::class, 'tournament_players');
     }
 }

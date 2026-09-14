@@ -8,12 +8,17 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Orchid\Resources\TournamentResource;
+use App\Orchid\Screens\DashboardScreen;
+use App\Orchid\Screens\TournamentInfoScreen;
 use App\Services\RoundTeamAssignment;
 use App\Services\TournamentResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Orchid\Crud\ResourceRequest;
+use Orchid\Platform\Models\Role;
 use Tests\TestCase;
 
 class TournamentRoundsTest extends TestCase
@@ -188,16 +193,68 @@ class TournamentRoundsTest extends TestCase
         }
         $this->mock(RoundTeamAssignment::class)->shouldReceive('startCurrentRound')->andReturn(null);
         foreach (['', '?sort=-points'] as $suffix) {
-            $request = \Illuminate\Http\Request::create('/tournament-info/'.$tournament->id.$suffix);
-            $route = new \Illuminate\Routing\Route('GET', 'tournament-info/{id}', fn () => null);
+            $request = Request::create('/tournament-info/'.$tournament->id.$suffix);
+            $route = new Route('GET', 'tournament-info/{id}', fn () => null);
             $route->bind($request);
             $request->setRouteResolver(fn () => $route);
-            $data = (new \App\Orchid\Screens\TournamentInfoScreen)->query($request);
+            $data = (new TournamentInfoScreen)->query($request);
             $this->assertSame(
                 [$players[2]->name, $players[0]->name, $players[1]->name, $players[3]->name],
                 array_map(fn ($entry) => $entry['name'], $data['leaderboard'])
             );
             $this->assertSame([1, 2, 3, 4], array_map(fn ($entry) => $entry['index'], $data['leaderboard']));
         }
+    }
+
+    public function test_archiving_removes_games_from_all_dashboard_metrics_and_can_be_undone(): void
+    {
+        $this->ratings();
+        $tournament = $this->tournament();
+        $players = $tournament->players()->orderBy('users.id')->get();
+        $role = Role::create(['name' => 'Spieler', 'slug' => 'player']);
+        $players[0]->addRole($role);
+        $this->actingAs($players[0]);
+        $base = ['home_user_id' => $players[0]->id, 'away_user_id' => $players[1]->id,
+            'powerplays_received_home' => 2, 'powerplays_used_home' => 1,
+            'goals_home' => 2, 'goals_away' => 1, 'shots_home' => 20];
+        $active = Game::factory()->create($base);
+        $old = Game::factory()->create(array_replace($base, [
+            'home_user_id' => $players[1]->id, 'away_user_id' => $players[0]->id,
+            'goals_home' => 1, 'goals_away' => 10, 'shots_away' => 50,
+        ]));
+        DB::table('rounds')->where('tournament_id', $tournament->id)->update(['game_id' => $old->id]);
+        $data = $tournament->only(['name', 'total_games_per_player', 'rounds', 'max_team_overall_rating_difference']);
+        $data['players'] = $players->modelKeys();
+        $resource = new TournamentResource;
+        $resource->onSave(ResourceRequest::create('/', 'POST', $data + ['archived' => 1]), $tournament);
+        $this->assertTrue($tournament->fresh()->archived);
+        $this->assertSame(2, Game::count());
+        $this->assertSame([$active->id], Game::forDashboard()->pluck('id')->all());
+        $stats = (new DashboardScreen)->query();
+        $this->assertSame('1', $stats['total_metrics']['total_games']['value']);
+        $this->assertSame('2', $stats['total_metrics']['total_goals']['value']);
+        $this->assertSame('20', $stats['total_metrics']['total_shots']['value']);
+        $this->assertSame(1, $stats['player_metrics']['wins_'.$players[1]->id]['value']);
+        $this->assertEquals(2, $stats['player_metrics']['avg_goals_'.$players[1]->id]['value']);
+        $this->assertEquals(2, $stats['player_metrics']['powerplay_possibility_against_'.$players[1]->id]['value']);
+        $this->assertEquals(50, $stats['player_metrics']['powerplay_score_probability_against_'.$players[1]->id]['value']);
+        $active->delete();
+        $empty = (new DashboardScreen)->query();
+        $this->assertSame('0', $empty['total_metrics']['total_games']['value']);
+        $this->assertSame([], $empty['player_metrics']);
+        $this->assertNotNull(Game::find($old->id));
+        $this->assertSame(6, Round::where('tournament_id', $tournament->id)->count());
+        $resource->onSave(ResourceRequest::create('/', 'POST', $data + ['archived' => 0]), $tournament);
+        $this->assertSame(1, Game::forDashboard()->count());
+    }
+
+    public function test_unfinished_tournament_cannot_be_archived(): void
+    {
+        $tournament = $this->tournament();
+        $data = $tournament->only(['name', 'total_games_per_player', 'rounds', 'max_team_overall_rating_difference']);
+        $data['players'] = $tournament->players->modelKeys();
+        $data['archived'] = 1;
+        $this->expectException(ValidationException::class);
+        (new TournamentResource)->onSave(ResourceRequest::create('/', 'POST', $data), $tournament);
     }
 }

@@ -27,7 +27,7 @@ class DashboardScreen extends Screen
 
         if ($isPlayer) {
             $userId = auth()->user()->id;
-            $totalStats = Game::select(DB::raw("
+            $totalStats = Game::forDashboard()->select(DB::raw("
             COUNT(*) as games,
             COALESCE(SUM(CASE
                 WHEN home_user_id = {$userId} THEN goals_home
@@ -60,13 +60,13 @@ class DashboardScreen extends Screen
                 'total_shorthanded_goals' => ['value' => $totalStats['shorthanded_goals'] ? round($totalStats['shorthanded_goals'], 2) : $totalStats['shorthanded_goals']],
                 'total_shots' => ['value' => number_format($totalStats['shots'])],
                 'total_hits' => ['value' => number_format($totalStats['hits'])],
-                'shots_for_goal' => ['value' => $totalStats['shots'] ? round($totalStats['shots'] / $totalStats['goals'], 2) : 0],
+                'shots_for_goal' => ['value' => $totalStats['goals'] ? round($totalStats['shots'] / $totalStats['goals'], 2) : 0],
             ];
             $playerMetrics = [];
 
-            $usersPlayed = Game::select('home_user_id AS id')
+            $usersPlayed = Game::forDashboard()->select('home_user_id AS id')
                 ->where('away_user_id', $userId)
-                ->union(Game::select('away_user_id AS id')
+                ->union(Game::forDashboard()->select('away_user_id AS id')
                     ->where('home_user_id', $userId))
                 ->get();
 
@@ -74,7 +74,7 @@ class DashboardScreen extends Screen
                 if ($player->id === $userId) {
                     continue;
                 }
-                $highestWin = Game::where('home_user_id', $userId)
+                $highestWin = Game::forDashboard()->where('home_user_id', $userId)
                     ->where('away_user_id', $player->id)
                     ->whereRaw('goals_home > goals_away')
                     ->select(DB::raw('games.goals_home AS first, games.goals_away AS second, ABS(games.goals_home - games.goals_away) AS highest_win'))
@@ -85,7 +85,7 @@ class DashboardScreen extends Screen
                     ->orderBy('highest_win', 'desc')
                     ->first();
 
-                $playerStats = Game::select(DB::raw("
+                $playerStats = Game::forDashboard()->select(DB::raw("
                     SUM(CASE
                     WHEN home_user_id = {$userId} AND goals_home > goals_away THEN 1
                     WHEN away_user_id = {$userId} AND goals_away > goals_home THEN 1
@@ -100,32 +100,32 @@ class DashboardScreen extends Screen
                         WHEN home_user_id = {$userId} THEN time_in_offense_home_in_seconds
                         WHEN away_user_id = {$userId} THEN time_in_offense_away_in_seconds
                     END), 0) AS avg_offense_time,
-                    COALESCE(ROUND(AVG(CASE
+                    COALESCE(ROUND(CAST(AVG(CASE
                         WHEN home_user_id = {$userId} THEN hits_home
                         WHEN away_user_id = {$userId} THEN hits_away
-                    END)::numeric, 2), 0) AS avg_hits,
-                    ROUND(AVG(CASE
+                    END) AS NUMERIC), 2), 0) AS avg_hits,
+                    ROUND(CAST(AVG(CASE
                         WHEN home_user_id = {$userId} THEN goals_home
                         WHEN away_user_id = {$userId} THEN goals_away
-                    END)::numeric, 2) as avg_goals,
-                    ROUND(AVG(CASE
+                    END) AS NUMERIC), 2) as avg_goals,
+                    ROUND(CAST(AVG(CASE
                         WHEN home_user_id = {$userId} THEN shots_home
                         WHEN away_user_id = {$userId} THEN shots_away
-                    END)::numeric, 2) as avg_shots,
-                    ROUND(AVG(CASE
+                    END) AS NUMERIC), 2) as avg_shots,
+                    ROUND(CAST(AVG(CASE
                         WHEN home_user_id = {$userId} THEN pass_percentage_home
                         WHEN away_user_id = {$userId} THEN pass_percentage_away
-                    END)::numeric, 2) as avg_pass_percentage,
+                    END) AS NUMERIC), 2) as avg_pass_percentage,
                     ROUND(SUM(CASE
                         WHEN home_user_id = {$userId} THEN powerplays_received_home
                         WHEN away_user_id = {$userId} THEN powerplays_received_away
                         ELSE 0
-                    END) / (SELECT COUNT(*) FROM games WHERE home_user_id = {$userId} AND away_user_id = {$player->id} OR home_user_id = {$player->id} AND away_user_id = {$userId}), 0) AS powerplay_possibility,
-                    ROUND(100 / SUM(CASE
+                    END) / NULLIF(COUNT(*), 0), 0) AS powerplay_possibility,
+                    ROUND(100.0 / NULLIF(SUM(CASE
                         WHEN home_user_id = {$userId} THEN powerplays_received_home
                         WHEN away_user_id = {$userId} THEN powerplays_received_away
                         ELSE 0
-                    END) * SUM(CASE
+                    END), 0) * SUM(CASE
                         WHEN home_user_id = {$userId} THEN powerplays_used_home
                         WHEN away_user_id = {$userId} THEN powerplays_used_away
                         ELSE 0
@@ -133,7 +133,7 @@ class DashboardScreen extends Screen
                 "))->where('home_user_id', $userId)->where('away_user_id', $player->id)
                     ->orWhere('away_user_id', $userId)->where('home_user_id', $player->id)->first();
 
-                $highestLoss = Game::where('home_user_id', $userId)
+                $highestLoss = Game::forDashboard()->where('home_user_id', $userId)
                     ->where('away_user_id', $player->id)
                     ->whereRaw('goals_home < goals_away')
                     ->select(DB::raw('games.goals_home AS first, games.goals_away AS second, ABS(games.goals_home - games.goals_away) AS highest_loss'))
@@ -147,44 +147,42 @@ class DashboardScreen extends Screen
                 $highestWinResult = '-';
                 if ($highestWin) {
                     if ($highestWin['first'] > $highestWin['second']) {
-                        $highestWinResult = $highestWin['first'] . ' - ' . $highestWin['second'];
+                        $highestWinResult = $highestWin['first'].' - '.$highestWin['second'];
                     } else {
-                        $highestWinResult = $highestWin['second'] . ' - ' . $highestWin['first'];
+                        $highestWinResult = $highestWin['second'].' - '.$highestWin['first'];
                     }
                 }
                 $highestLossResult = '-';
                 if ($highestLoss) {
                     if ($highestLoss['first'] < $highestLoss['second']) {
-                        $highestLossResult = $highestLoss['first'] . ' - ' . $highestLoss['second'];
+                        $highestLossResult = $highestLoss['first'].' - '.$highestLoss['second'];
                     } else {
-                        $highestLossResult = $highestLoss['second'] . ' - ' . $highestLoss['first'];
+                        $highestLossResult = $highestLoss['second'].' - '.$highestLoss['first'];
                     }
                 }
 
-                $playerMetrics['wins_' . $player['id']] = ['value' => intval($playerStats['wins'])];
-                $playerMetrics['losses_' . $player['id']] = ['value' => $playerStats['losses']];
-                $playerMetrics['highest_win_' . $player['id']] = ['value' => $highestWinResult];
-                $playerMetrics['highest_loss_' . $player['id']] = ['value' => $highestLossResult];
-                $playerMetrics['avg_goals_' . $player['id']] = ['value' => $playerStats['avg_goals']];
-                $playerMetrics['avg_shots_' . $player['id']] = ['value' => $playerStats['avg_shots']];
-                $playerMetrics['avg_hits_' . $player['id']] = ['value' => $playerStats['avg_hits']];
-                $playerMetrics['avg_pass_percentage_' . $player['id']] = ['value' => $playerStats['avg_pass_percentage']];
-                $playerMetrics['avg_time_in_offense_against_' . $player['id']] = ['value' => DateHelper::minuteAndSecondFormatFromSeconds($playerStats['avg_offense_time']),
-                $playerMetrics['powerplay_possibility_against_' . $player['id']] = ['value' => $playerStats['powerplay_possibility']],
-                $playerMetrics['powerplay_score_probability_against_' . $player['id']] = ['value' => $playerStats['powerplay_score_probability']]
-                ];
+                $playerMetrics['wins_'.$player['id']] = ['value' => intval($playerStats['wins'])];
+                $playerMetrics['losses_'.$player['id']] = ['value' => $playerStats['losses']];
+                $playerMetrics['highest_win_'.$player['id']] = ['value' => $highestWinResult];
+                $playerMetrics['highest_loss_'.$player['id']] = ['value' => $highestLossResult];
+                $playerMetrics['avg_goals_'.$player['id']] = ['value' => $playerStats['avg_goals']];
+                $playerMetrics['avg_shots_'.$player['id']] = ['value' => $playerStats['avg_shots']];
+                $playerMetrics['avg_hits_'.$player['id']] = ['value' => $playerStats['avg_hits']];
+                $playerMetrics['avg_pass_percentage_'.$player['id']] = ['value' => $playerStats['avg_pass_percentage']];
+                $playerMetrics['avg_time_in_offense_against_'.$player['id']] = ['value' => DateHelper::minuteAndSecondFormatFromSeconds($playerStats['avg_offense_time'])];
+                $playerMetrics['powerplay_possibility_against_'.$player['id']] = ['value' => $playerStats['powerplay_possibility']];
+                $playerMetrics['powerplay_score_probability_against_'.$player['id']] = ['value' => $playerStats['powerplay_score_probability'] ?? 0];
             }
 
             $query['total_metrics'] = $totalMetrics;
             $query['player_metrics'] = $playerMetrics;
         }
+
         return $query;
     }
 
     /**
      * The name of the screen displayed in the header.
-     *
-     * @return string|null
      */
     public function name(): ?string
     {
@@ -193,8 +191,6 @@ class DashboardScreen extends Screen
 
     /**
      * Display header description.
-     *
-     * @return string|null
      */
     public function description(): ?string
     {
@@ -209,7 +205,7 @@ class DashboardScreen extends Screen
     public function commandBar(): iterable
     {
         return [
-//            Link::make('Kaffee kaufen')
+            //            Link::make('Kaffee kaufen')
             //              ->href('https://www.buymeacoffee.com/didiweinh')
             //            ->icon('cup'),
         ];
@@ -239,10 +235,10 @@ class DashboardScreen extends Screen
             ];
             $playerMetrics = [];
 
-            $usersPlayed = Game::select('users.name', 'games.home_user_id AS id')
+            $usersPlayed = Game::forDashboard()->select('users.name', 'games.home_user_id AS id')
                 ->leftJoin('users', 'users.id', '=', 'games.home_user_id')
                 ->where('away_user_id', $userId)
-                ->union(Game::select('users.name AS name', 'games.away_user_id AS id')
+                ->union(Game::forDashboard()->select('users.name AS name', 'games.away_user_id AS id')
                     ->leftJoin('users', 'users.id', '=', 'games.away_user_id')
                     ->where('home_user_id', $userId))
                 ->get();
@@ -252,22 +248,23 @@ class DashboardScreen extends Screen
                     continue;
                 }
                 $name = $player['name'];
-                $playerMetrics[__('dashboard.wins_against') . ' ' . $name] = 'player_metrics.wins_' . $player['id'];
-                $playerMetrics[__('dashboard.losses_against') . ' ' . $name] = 'player_metrics.losses_' . $player['id'];
-                $playerMetrics[__('dashboard.highest_win_against') . ' ' . $name] = 'player_metrics.highest_win_' . $player['id'];
-                $playerMetrics[__('dashboard.highest_loss_against') . ' ' . $name] = 'player_metrics.highest_loss_' . $player['id'];
-                $playerMetrics[__('dashboard.avg_goals_against') . ' ' . $name] = 'player_metrics.avg_goals_' . $player['id'];
-                $playerMetrics[__('dashboard.avg_shots_against') . ' ' . $name] = 'player_metrics.avg_shots_' . $player['id'];
-                $playerMetrics[__('dashboard.avg_hits_against') . ' ' . $name] = 'player_metrics.avg_hits_' . $player['id'];
-                $playerMetrics[__('dashboard.avg_pass_percentage') . ' ' . $name] = 'player_metrics.avg_pass_percentage_' . $player['id'];
-                $playerMetrics[__('dashboard.avg_time_in_offense_against') . ' ' . $name] = 'player_metrics.avg_time_in_offense_against_' . $player['id'];
-                $playerMetrics[__('dashboard.powerplay_possibility_against') . ' ' . $name] = 'player_metrics.powerplay_possibility_against_' . $player['id'];
-                $playerMetrics[__('dashboard.powerplay_score_probability_against') . ' ' . $name] = 'player_metrics.powerplay_score_probability_against_' . $player['id'];
+                $playerMetrics[__('dashboard.wins_against').' '.$name] = 'player_metrics.wins_'.$player['id'];
+                $playerMetrics[__('dashboard.losses_against').' '.$name] = 'player_metrics.losses_'.$player['id'];
+                $playerMetrics[__('dashboard.highest_win_against').' '.$name] = 'player_metrics.highest_win_'.$player['id'];
+                $playerMetrics[__('dashboard.highest_loss_against').' '.$name] = 'player_metrics.highest_loss_'.$player['id'];
+                $playerMetrics[__('dashboard.avg_goals_against').' '.$name] = 'player_metrics.avg_goals_'.$player['id'];
+                $playerMetrics[__('dashboard.avg_shots_against').' '.$name] = 'player_metrics.avg_shots_'.$player['id'];
+                $playerMetrics[__('dashboard.avg_hits_against').' '.$name] = 'player_metrics.avg_hits_'.$player['id'];
+                $playerMetrics[__('dashboard.avg_pass_percentage').' '.$name] = 'player_metrics.avg_pass_percentage_'.$player['id'];
+                $playerMetrics[__('dashboard.avg_time_in_offense_against').' '.$name] = 'player_metrics.avg_time_in_offense_against_'.$player['id'];
+                $playerMetrics[__('dashboard.powerplay_possibility_against').' '.$name] = 'player_metrics.powerplay_possibility_against_'.$player['id'];
+                $playerMetrics[__('dashboard.powerplay_score_probability_against').' '.$name] = 'player_metrics.powerplay_score_probability_against_'.$player['id'];
             }
 
             $content[] = Layout::metrics($totalMetrics);
             $content[] = Layout::metrics($playerMetrics);
         }
+
         return $content;
     }
 }
