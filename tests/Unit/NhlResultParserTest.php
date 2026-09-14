@@ -104,4 +104,15 @@ class NhlResultParserTest extends TestCase
             $this->assertCount(2, $result);
         }
     }
+
+    public function test_photographed_result_with_logo_text_and_total_shots(): void
+    {
+        $annotations = json_decode(file_get_contents(__DIR__.'/../Fixtures/nhl-photo-annotations.json'), true, 512, JSON_THROW_ON_ERROR);
+        $result = (new NhlResultParser)->parse($annotations, ['LAK' => 1, 'EDM' => 2]);
+        $this->assertSame(7, $result['goals_away'] ?? null);
+        $this->assertSame(6, $result['goals_home'] ?? null);
+        $this->assertSame(18, $result['shots_away'] ?? null);
+        $this->assertSame(19, $result['shots_home'] ?? null);
+        $this->assertSame(100.0, $result['detection_percentage']);
+    }
 }

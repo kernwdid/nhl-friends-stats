@@ -6,6 +6,7 @@ use App\Http\Controllers\VisionController;
 use App\Models\User;
 use App\Orchid\Layouts\ResultUploadListener;
 use App\Orchid\Screens\VisionScreen;
+use App\Services\NhlResultParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -87,5 +88,106 @@ class ResultUploadListenerTest extends TestCase
         $this->assertSame('4', $xpath->query('//input[@name="away_team_id"]')->item(0)->getAttribute('value'));
         $this->assertSame('8', $xpath->query('//input[@name="home_team_id"]')->item(0)->getAttribute('value'));
         Storage::disk('public')->assertMissing('ocr/test.png');
+    }
+
+    public function test_reversed_teams_swap_every_statistic_but_keep_players(): void
+    {
+        $ocr = ['away_team_id' => '8', 'home_team_id' => '4', 'detection_percentage' => 100, 'view_result' => 'EDM 7-6 LAK'];
+        foreach (NhlResultParser::fields() as $field) {
+            if (! str_ends_with($field, '_team_id')) {
+                $ocr[$field] = str_contains($field, '_away') ? 7 : 6;
+            }
+        }
+        $this->mock(VisionScreen::class)->shouldReceive('processResult')->once()->andReturn($ocr);
+        $result = (new ResultUploadListener)->handle(new Repository([
+            'query' => ['away_team_id' => 4, 'home_team_id' => 8],
+            'away_user_id' => 10, 'home_user_id' => 20,
+        ]), Request::create('/', 'POST', ['game_result' => 12]));
+        foreach (NhlResultParser::fields() as $field) {
+            if (! str_ends_with($field, '_team_id')) {
+                $this->assertSame(str_contains($field, '_away') ? 6 : 7, $result->get($field), $field);
+            }
+        }
+        $this->assertSame(4, $result->get('away_team_id'));
+        $this->assertSame(8, $result->get('home_team_id'));
+        $this->assertSame(10, $result->get('away_user_id'));
+        $this->assertSame(20, $result->get('home_user_id'));
+        $this->assertSame(100, $result->get('detection_percentage'));
+    }
+
+    public function test_missing_statistic_stays_missing_on_its_corrected_side(): void
+    {
+        $this->mock(VisionScreen::class)->shouldReceive('processResult')->once()->andReturn([
+            'away_team_id' => 8, 'home_team_id' => 4, 'shots_away' => 19,
+        ]);
+        $result = (new ResultUploadListener)->handle(new Repository([
+            'query' => ['away_team_id' => 4, 'home_team_id' => 8], 'shots_away' => 99,
+        ]), Request::create('/', 'POST', ['game_result' => 12]));
+        $this->assertNull($result->get('shots_away'));
+        $this->assertSame(19, $result->get('shots_home'));
+    }
+
+    public function test_correct_or_uncertain_team_matches_do_not_trigger_a_swap(): void
+    {
+        foreach ([
+            ['away_team_id' => 4, 'home_team_id' => 8],
+            ['away_team_id' => 8],
+            ['away_team_id' => 8, 'home_team_id' => 9],
+            ['away_team_id' => 8, 'home_team_id' => 8],
+        ] as $teams) {
+            $this->mock(VisionScreen::class)->shouldReceive('processResult')->once()->andReturn($teams + ['goals_away' => 7, 'goals_home' => 6]);
+            $result = (new ResultUploadListener)->handle(new Repository([
+                'query' => ['away_team_id' => 4, 'home_team_id' => 8],
+            ]), Request::create('/', 'POST', ['game_result' => 12]));
+            $this->assertSame(7, $result->get('goals_away'));
+            $this->assertSame(6, $result->get('goals_home'));
+        }
+    }
+
+    public function test_wpg_ocr_matches_win_database_team_and_corrects_the_fixture(): void
+    {
+        $annotations = [];
+        $rows = [
+            ['TBL', '4-3', 'WPG'],
+            ['20', 'TOTAL SHOTS', '21'],
+            ['18', 'HITS', '11'],
+            ['10:24', 'TIME ON ATTACK', '12:08'],
+            ['76.2%', 'PASSING', '86.2%'],
+            ['9', 'FACEOFFS WON', '9'],
+            ['02:00', 'PENALTY MINUTES', '04:00'],
+            ['2/2', 'POWERPLAYS', '0/1'],
+            ['01:18', 'POWERPLAY MINUTES', '01:12'],
+            ['0', 'SHORTHANDED GOALS', '0'],
+        ];
+        foreach ($rows as $row => $values) {
+            foreach ($values as $column => $text) {
+                $x = 100 + $column * 300;
+                $y = 100 + $row * 60;
+                $annotations[] = ['text' => $text, 'vertices' => [
+                    [$x, $y], [$x + 180, $y], [$x + 180, $y + 20], [$x, $y + 20],
+                ]];
+            }
+        }
+        $ocr = (new NhlResultParser)->parse($annotations, ['WIN' => 41, 'TBL' => 42]);
+        $this->assertSame(41, $ocr['home_team_id']);
+        $this->assertSame(100.0, $ocr['detection_percentage']);
+        $this->mock(VisionScreen::class)->shouldReceive('processResult')->once()->andReturn($ocr);
+        $result = (new ResultUploadListener)->handle(new Repository([
+            'query' => ['away_team_id' => 41, 'home_team_id' => 42],
+        ]), Request::create('/', 'POST', ['game_result' => 12]));
+        foreach ([
+            'goals_away' => 3, 'goals_home' => 4,
+            'shots_away' => 21, 'shots_home' => 20,
+            'hits_away' => 11, 'hits_home' => 18,
+            'time_in_offense_away_in_seconds' => 728, 'time_in_offense_home_in_seconds' => 624,
+            'pass_percentage_away' => 86.2, 'pass_percentage_home' => 76.2,
+            'penalty_minutes_away_in_seconds' => 240, 'penalty_minutes_home_in_seconds' => 120,
+            'powerplays_used_away' => 0, 'powerplays_used_home' => 2,
+            'powerplays_received_away' => 1, 'powerplays_received_home' => 2,
+            'powerplay_time_away_in_seconds' => 72, 'powerplay_time_home_in_seconds' => 78,
+        ] as $field => $expected) {
+            $this->assertSame($expected, $result->get($field), $field);
+        }
+        $this->assertStringContainsString('automatisch korrigiert', $result->get('view_result'));
     }
 }

@@ -33,7 +33,7 @@ return [
     'shorthanded_goals_away' => 'Tore in Unterzahl Auswärts',
     'upload_result' => 'Resultat hochladen',
     'detection_percentage' => 'Automatisch zugeordnete Felder in %',
-    'upload_limit' => 'Pro Monat können alle Spieler zusammen maximal 750 Resultate analysieren.',
+    'upload_limit' => 'Pro Monat können alle Spieler zusammen maximal :MAX Resultate analysieren.',
     'save' => 'Spiel erstellen',
     'result' => 'Resultat',
     'win_type' => 'Sieg nach',

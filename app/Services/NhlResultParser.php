@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 class NhlResultParser
 {
     private const LABELS = [
-        'shots' => ['shots', 'shots on goal', 'schüsse', 'schuesse'],
+        'shots' => ['shots', 'total shots', 'shots on goal', 'schüsse', 'schuesse'],
         'hits' => ['hits', 'checks'],
         'time_in_offense' => ['time on attack', 'time in offense', 'zeit in offensive', 'zeit in der offensive', 'angriffszeit'],
         'pass_percentage' => ['passing', 'passing percentage', 'pass percentage', 'passgenauigkeit', 'passquote'],
@@ -44,6 +44,14 @@ class NhlResultParser
      */
     public function parse(array $annotations, array $teams = []): array
     {
+        // EA uses WPG while existing team records use WIN.
+        // Keep explicit entries intact if a database already contains both.
+        if (isset($teams['WIN']) && ! isset($teams['WPG'])) {
+            $teams['WPG'] = $teams['WIN'];
+        } elseif (isset($teams['WPG']) && ! isset($teams['WIN'])) {
+            $teams['WIN'] = $teams['WPG'];
+        }
+
         $tokens = [];
         foreach ($annotations as $annotation) {
             $points = $annotation['vertices'] ?? [];
@@ -65,7 +73,7 @@ class NhlResultParser
         foreach ($tokens as $token) {
             $last = count($rows) - 1;
             // Compare against the row anchor, avoiding chained merges across rows.
-            if ($last < 0 || abs($rows[$last][0]['y'] - $token['y']) > min($rows[$last][0]['height'], $token['height']) * 0.6) {
+            if ($last < 0 || abs($rows[$last][0]['y'] - $token['y']) > max($rows[$last][0]['height'], $token['height']) * 0.6) {
                 $rows[] = [$token];
             } else {
                 $rows[$last][] = $token;
@@ -112,11 +120,17 @@ class NhlResultParser
                         $remaining[] = $token['text'];
                     }
                 }
-                $score = preg_replace('/\s+/u', '', implode('', $remaining));
-                if (preg_match('/^(\d{1,2})[-–—](\d{1,2})$/u', $score, $match)
-                    && (int) $match[1] <= 50 && (int) $match[2] <= 50) {
-                    $candidates['goals_away'][] = (int) $match[1];
-                    $candidates['goals_home'][] = (int) $match[2];
+                // Logo words may share the score row. Match a complete score
+                // within adjacent tokens rather than requiring an otherwise empty row.
+                for ($start = 0; $start < count($remaining); $start++) {
+                    for ($length = 1; $length <= 3 && $start + $length <= count($remaining); $length++) {
+                        $score = preg_replace('/\s+/u', '', implode('', array_slice($remaining, $start, $length)));
+                        if (preg_match('/^(\d{1,2})[-–—](\d{1,2})$/u', $score, $match)
+                            && (int) $match[1] <= 50 && (int) $match[2] <= 50) {
+                            $candidates['goals_away'][] = (int) $match[1];
+                            $candidates['goals_home'][] = (int) $match[2];
+                        }
+                    }
                 }
             }
         }

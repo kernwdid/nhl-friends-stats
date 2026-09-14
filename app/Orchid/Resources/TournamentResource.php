@@ -154,7 +154,7 @@ class TournamentResource extends Resource
 
     public static function permission(): ?string
     {
-        return 'resource.teams';
+        return 'resource.tournaments';
     }
 
     /**

@@ -36,7 +36,7 @@ class ResultUploadListener extends Listener
         if ($totalAttachments < config('app.gc_ocr_analyzing_limit')) {
             $fields = [
                 Cropper::make('game_result')
-                    ->help(__('games.upload_limit'))
+                    ->help(__('games.upload_limit', ['max' => config('app.gc_ocr_analyzing_limit')]))
                     ->title(__('games.upload_result'))
                     ->targetId(),
                 TextArea::make('view_result')
@@ -283,6 +283,22 @@ class ResultUploadListener extends Listener
 
         $result = app(VisionScreen::class)->processResult((int) $attachmentId);
         $locked = $repository->get('query', []);
+        if (is_array($result)
+            && isset($locked['home_team_id'], $locked['away_team_id'], $result['home_team_id'], $result['away_team_id'])
+            && (int) $locked['home_team_id'] !== (int) $locked['away_team_id']
+            && (int) $result['away_team_id'] === (int) $locked['home_team_id']
+            && (int) $result['home_team_id'] === (int) $locked['away_team_id']) {
+            $original = $result;
+            foreach (NhlResultParser::fields() as $field) {
+                $opposite = preg_replace_callback('/(^|_)(home|away)(?=_|$)/',
+                    fn ($match) => $match[1].($match[2] === 'home' ? 'away' : 'home'), $field);
+                unset($result[$field]);
+                if (array_key_exists($opposite, $original)) {
+                    $result[$field] = $original[$opposite];
+                }
+            }
+            $result['view_result'] = "Heim/Auswärts anhand der Teams automatisch korrigiert.\n".($original['view_result'] ?? '');
+        }
         // Clear the previous image's statistics, including values not detected in
         // the replacement, so two screenshots cannot silently become one result.
         foreach (NhlResultParser::fields() as $field) {

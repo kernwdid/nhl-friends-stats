@@ -14,6 +14,10 @@ return [
     |
     */
 
+    'google_vision' => [
+        'credentials' => env('GOOGLE_APPLICATION_CREDENTIALS', base_path('gc_config.json')),
+    ],
+
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),
