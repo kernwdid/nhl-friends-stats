@@ -26,7 +26,7 @@ class TournamentPolicy
 
     public function update(User $user)
     {
-        return $user->id === 1;
+        return $user->hasAccess('platform.systems.roles');
     }
 
     public function create()

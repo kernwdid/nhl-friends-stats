@@ -141,7 +141,11 @@ class TournamentInfoScreen extends Screen
      */
     public function commandBar(): iterable
     {
-        return [];
+        return [
+            Link::make('Turnier bearbeiten')->icon('pencil')
+                ->route('platform.resource.edit', ['resource' => 'tournament-resources', 'id' => $this->tournament->id])
+                ->canSee(auth()->user()?->can('update', $this->tournament) ?? false),
+        ];
     }
 
     /**

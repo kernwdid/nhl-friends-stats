@@ -2,6 +2,10 @@
 
 return [
     'title' => 'Turniere',
+    'singular' => 'Turnier',
+    'create' => 'Turnier erstellen',
+    'delete' => 'Turnier löschen',
+    'view' => 'Ansehen',
     'total_games_per_player' => 'Totale Anzahl Spiele pro Spieler',
     'rounds' => 'Anzahl Runden',
     'max_team_overall_rating_difference' => 'Maximaler Unterschied der Gesamtwertung zwischen Teams',

@@ -36,6 +36,7 @@ class TournamentResource extends Resource
     {
         return [
             CheckBox::make('archived')->title('Archiviert')->sendTrueOrFalse()
+                ->canSee(request()->routeIs('platform.resource.edit'))
                 ->help('Abgeschlossene Turniere archivieren: Ergebnisse bleiben erhalten, zählen aber nicht mehr im Dashboard.'),
             Input::make('name')
                 ->title('Name')
@@ -71,19 +72,11 @@ class TournamentResource extends Resource
     public function columns(): array
     {
         return [
-            TD::make('id', 'ID'),
-            TD::make('archived', 'Status')->render(fn ($model) => $model->archived ? 'Archiviert' : 'Nicht archiviert'),
-            TD::make('name')->render(function ($model) {
-                return '<a href="/tournament-info/'.$model->id.'?sort=-points">'.$model->name.'</a>';
-            })->sort(),
-            TD::make('created_at', __('general.created_at'))
-                ->render(function ($model) {
-                    return DateHelper::formatDateTime($model->created_at->toDateTimeString()).' '.__('general.oclock');
-                }),
-            TD::make('updated_at', __('general.updated_at'))
-                ->render(function ($model) {
-                    return DateHelper::formatDateTime($model->updated_at->toDateTimeString()).' '.__('general.oclock');
-                }),
+            TD::make('name', 'Turnier')->cantHide()->sort()
+                ->style('white-space: normal;')
+                ->render(fn ($model) => view('tournaments.list-entry', ['tournament' => $model])),
+            TD::make('actions', 'Aktionen')->cantHide()->alignRight()->width('1%')
+                ->render(fn ($model) => view('tournaments.list-actions', ['tournament' => $model])),
         ];
     }
 
@@ -158,6 +151,31 @@ class TournamentResource extends Resource
             unset($fixture);
             Round::insert($fixtures);
         });
+    }
+
+    public static function label(): string
+    {
+        return __('tournaments.title');
+    }
+
+    public static function singularLabel(): string
+    {
+        return __('tournaments.singular');
+    }
+
+    public static function deleteButtonLabel(): string
+    {
+        return __('tournaments.delete');
+    }
+
+    public static function createButtonLabel(): string
+    {
+        return __('tournaments.create');
+    }
+
+    public function canShowTableActions(): bool
+    {
+        return false;
     }
 
     public static function displayInNavigation(): bool

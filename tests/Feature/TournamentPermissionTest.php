@@ -42,4 +42,24 @@ class TournamentPermissionTest extends TestCase
         $this->actingAs($player)->get(route('platform.resource.list', ['resource' => 'tournament-resources']))->assertOk();
         $this->get(route('platform.resource.list', ['resource' => 'team-resources']))->assertForbidden();
     }
+
+    public function test_edit_requires_administration_permission_even_for_user_one(): void
+    {
+        $player = User::factory()->create(['permissions' => ['platform.index' => true, 'resource.tournaments' => true]]);
+        $admin = User::factory()->create(['permissions' => [
+            'platform.index' => true, 'resource.tournaments' => true, 'platform.systems.roles' => true,
+        ]]);
+        $tournament = new \App\Models\Tournament;
+        $tournament->forceFill(['name' => 'Protected', 'rounds' => 1, 'total_games_per_player' => 1,
+            'max_team_overall_rating_difference' => 5])->save();
+        $url = route('platform.resource.edit', ['resource' => 'tournament-resources', 'id' => $tournament->id]);
+        $this->assertFalse($player->can('update', $tournament));
+        $this->actingAs($player)->get($url)->assertForbidden();
+        $this->post($url.'/update', ['model' => ['name' => 'Tampered']])->assertForbidden();
+        $this->assertSame('Protected', $tournament->fresh()->name);
+        $this->assertStringNotContainsString('>Bearbeiten</a>', view('tournaments.list-actions', compact('tournament'))->render());
+        $this->actingAs($admin);
+        $this->assertTrue($admin->can('update', $tournament));
+        $this->assertStringContainsString('>Bearbeiten</a>', view('tournaments.list-actions', compact('tournament'))->render());
+    }
 }
