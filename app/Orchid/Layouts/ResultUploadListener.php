@@ -13,7 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Orchid\Attachment\Models\Attachment;
-use Orchid\Screen\Fields\Cropper;
+use App\Orchid\Fields\ResultPhoto;
 use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Fields\TextArea;
@@ -35,7 +35,9 @@ class ResultUploadListener extends Listener
 
         if ($totalAttachments < config('app.gc_ocr_analyzing_limit')) {
             $fields = [
-                Cropper::make('game_result')
+                ResultPhoto::make('game_result')
+                    ->maxCanvas(3000)
+                    ->imageSmoothingQuality('high')
                     ->help(__('games.upload_limit', ['max' => config('app.gc_ocr_analyzing_limit')]))
                     ->title(__('games.upload_result'))
                     ->targetId(),
