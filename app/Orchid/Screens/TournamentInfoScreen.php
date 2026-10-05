@@ -113,6 +113,24 @@ class TournamentInfoScreen extends Screen
             ->with('game')
             ->get();
 
+        $userId = $request->user()?->id;
+        $currentRound = $currentRound->sortBy(function (Round $fixture) use ($userId) {
+            $isHome = $userId !== null && (int) $fixture->home_user_id === (int) $userId;
+            $isAway = $userId !== null && (int) $fixture->away_user_id === (int) $userId;
+            $isOwn = $isHome || $isAway;
+            $opponent = $isHome ? $fixture->away_user : $fixture->home_user;
+
+            // Personal open games first, grouped by opponent; completed games last.
+            return [
+                $fixture->game_id !== null ? 1 : 0,
+                $isOwn ? 0 : 1,
+                $isOwn ? mb_strtolower($opponent?->name ?? '') : '',
+                $isOwn ? ($opponent?->id ?? 0) : 0,
+                $isOwn && !$isHome ? 1 : 0,
+                $fixture->id,
+            ];
+        })->values();
+
         $roundItems = [];
         foreach ($currentRound as $roundItem) {
             $roundItems[] = new Repository($roundItem->toArray());
