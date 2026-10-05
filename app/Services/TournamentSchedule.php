@@ -16,26 +16,63 @@ class TournamentSchedule
             throw new InvalidArgumentException('Choose at least two players, an even total of player appearances, and at least one game per round.');
         }
         shuffle($players);
-        $edges = [];
-        for ($cycle = 0; $cycle < intdiv($games, $n - 1); $cycle++) {
-            for ($i = 0; $i < $n; $i++) {
-                for ($j = $i + 1; $j < $n; $j++) {
-                    $edges[] = [$players[$i], $players[$j]];
+        $roundByEdge = [];
+        $perRound = intdiv($games, $rounds);
+        if ($games % $rounds === 0 && ($n * $perRound) % 2 === 0) {
+            // Build regular factors first. Splitting shuffled individual games
+            // only balances round sizes, not each player's appearances.
+            $factors = [];
+            $degree = $n % 2 === 0 ? 1 : 2;
+            if ($degree === 1) {
+                $rotation = $players;
+                for ($step = 0; $step < $n - 1; $step++) {
+                    $factor = [];
+                    for ($i = 0; $i < $n / 2; $i++) {
+                        $factor[] = [$rotation[$i], $rotation[$n - 1 - $i]];
+                    }
+                    $factors[] = $factor;
+                    $last = array_pop($rotation);
+                    array_splice($rotation, 1, 0, [$last]);
+                }
+            } else {
+                for ($distance = 1; $distance <= intdiv($n, 2); $distance++) {
+                    $factor = [];
+                    for ($i = 0; $i < $n; $i++) {
+                        $factor[] = [$players[$i], $players[($i + $distance) % $n]];
+                    }
+                    $factors[] = $factor;
                 }
             }
-        }
-        $remaining = $games % ($n - 1);
-        for ($distance = 1; $distance <= intdiv($remaining, 2); $distance++) {
-            for ($i = 0; $i < $n; $i++) {
-                $edges[] = [$players[$i], $players[($i + $distance) % $n]];
+            shuffle($factors);
+            $edges = [];
+            for ($i = 0; $i < intdiv($games, $degree); $i++) {
+                foreach ($factors[$i % count($factors)] as $edge) {
+                    $roundByEdge[] = intdiv($i, intdiv($perRound, $degree)) + 1;
+                    $edges[] = $edge;
+                }
             }
-        }
-        if ($remaining % 2 === 1) {
-            for ($i = 0; $i < $n / 2; $i++) {
-                $edges[] = [$players[$i], $players[$i + $n / 2]];
+        } else {
+            $edges = [];
+            for ($cycle = 0; $cycle < intdiv($games, $n - 1); $cycle++) {
+                for ($i = 0; $i < $n; $i++) {
+                    for ($j = $i + 1; $j < $n; $j++) {
+                        $edges[] = [$players[$i], $players[$j]];
+                    }
+                }
             }
+            $remaining = $games % ($n - 1);
+            for ($distance = 1; $distance <= intdiv($remaining, 2); $distance++) {
+                for ($i = 0; $i < $n; $i++) {
+                    $edges[] = [$players[$i], $players[($i + $distance) % $n]];
+                }
+            }
+            if ($remaining % 2 === 1) {
+                for ($i = 0; $i < $n / 2; $i++) {
+                    $edges[] = [$players[$i], $players[$i + $n / 2]];
+                }
+            }
+            shuffle($edges);
         }
-        shuffle($edges);
 
         // Euler orientation balances each vertex, including partial round-robin cycles.
         $adjacency = [];
@@ -78,7 +115,7 @@ class TournamentSchedule
         $result = [];
         foreach (array_values($oriented) as $i => [$home, $away]) {
             $result[] = [
-                'round' => intdiv($i * $rounds, $edgeCount) + 1,
+                'round' => $roundByEdge[$i] ?? (intdiv($i * $rounds, $edgeCount) + 1),
                 'home_user_id' => $home,
                 'away_user_id' => $away,
                 'home_team_id' => null,
