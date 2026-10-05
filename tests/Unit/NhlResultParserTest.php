@@ -127,4 +127,30 @@ class NhlResultParserTest extends TestCase
         $this->assertArrayNotHasKey('goals_away', $result);
         $this->assertArrayNotHasKey('goals_home', $result);
     }
+
+    public function test_german_photo_statistics_are_mapped(): void
+    {
+        $annotations = json_decode(file_get_contents(__DIR__.'/../Fixtures/nhl-german-photo-annotations.json'), true, 512, JSON_THROW_ON_ERROR);
+        $result = (new NhlResultParser)->parse($annotations, ['TBL' => 1, 'NYR' => 2]);
+        foreach ([
+            'goals_away' => 5, 'goals_home' => 3,
+            'shots_away' => 32, 'shots_home' => 23,
+            'hits_away' => 15, 'hits_home' => 22,
+            'time_in_offense_away_in_seconds' => 622, 'time_in_offense_home_in_seconds' => 414,
+            'pass_percentage_away' => 89.2, 'pass_percentage_home' => 76.8,
+            'faceoffs_won_away' => 9, 'faceoffs_won_home' => 15,
+            'penalty_minutes_away_in_seconds' => 240, 'penalty_minutes_home_in_seconds' => 240,
+            'powerplays_used_away' => 0, 'powerplays_used_home' => 0,
+            'powerplays_received_away' => 1, 'powerplays_received_home' => 1,
+            'powerplay_time_away_in_seconds' => 120, 'powerplay_time_home_in_seconds' => 120,
+            'shorthanded_goals_away' => 0,
+        ] as $field => $expected) {
+            $this->assertSame($expected, $result[$field] ?? null, $field);
+        }
+        $this->assertSame(1, $result['away_team_id']);
+        $this->assertSame(2, $result['home_team_id']);
+        // Google did not return the right-hand zero; never invent it.
+        $this->assertArrayNotHasKey('shorthanded_goals_home', $result);
+        $this->assertSame(95.83, $result['detection_percentage']);
+    }
 }

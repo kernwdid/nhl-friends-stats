@@ -7,11 +7,11 @@ use Illuminate\Support\Str;
 class NhlResultParser
 {
     private const LABELS = [
-        'shots' => ['shots', 'total shots', 'shots on goal', 'schüsse', 'schuesse'],
+        'shots' => ['shots', 'total shots', 'shots on goal', 'schüsse', 'schuesse', 'schüsse insgesamt'],
         'hits' => ['hits', 'checks'],
         'time_in_offense' => ['time on attack', 'time in offense', 'zeit in offensive', 'zeit in der offensive', 'angriffszeit'],
-        'pass_percentage' => ['passing', 'passing percentage', 'pass percentage', 'passgenauigkeit', 'passquote'],
-        'faceoffs_won' => ['faceoffs won', 'gewonnene faceoffs', 'gewonnene bully s', 'gewonnene bullys'],
+        'pass_percentage' => ['passing', 'passing percentage', 'pass percentage', 'passgenauigkeit', 'passquote', 'passen'],
+        'faceoffs_won' => ['faceoffs won', 'gewonnene faceoffs', 'gewonnene bully s', 'gewonnene bullys', 'bullys gewonnen'],
         'penalty_minutes' => ['penalty minutes', 'strafminuten'],
         'powerplays' => ['power plays', 'powerplays', 'überzahlspiele'],
         'powerplay_time' => ['power play minutes', 'power play time', 'powerplay minuten', 'überzahlzeit'],
@@ -137,6 +137,11 @@ class NhlResultParser
 
         $result = [];
         foreach ($candidates as $field => $values) {
+            // Vision may repeat the same team annotation. Repeated agreement
+            // is safe; different team IDs on one side remain ambiguous.
+            if (str_ends_with($field, '_team_id')) {
+                $values = array_values(array_unique($values));
+            }
             if (count($values) === 1) {
                 $result[$field] = $values[0];
             }
