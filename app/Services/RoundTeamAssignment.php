@@ -41,14 +41,57 @@ class RoundTeamAssignment
                     'teams' => 'No team pairing satisfies this tournament rating difference. Update the ratings and retry.',
                 ]);
             }
-            shuffle($pairs);
-            foreach ($pending->values() as $index => $fixture) {
+            // Count assignments (including unplayed games already drawn), not
+            // only results. Each tournament has its own usage history.
+            $usage = [];
+            $lastTeam = [];
+            $history = Round::where('tournament_id', $tournamentId)
+                ->where('round', '<=', $number)
+                ->whereNotIn('id', $pending->modelKeys())
+                ->orderBy('round')->orderBy('id')->get();
+            foreach ($history as $previous) {
+                foreach (['home', 'away'] as $side) {
+                    $player = $previous->{$side.'_user_id'};
+                    $team = $previous->{$side.'_team_id'};
+                    if ($team !== null) {
+                        $usage[$player][$team] = ($usage[$player][$team] ?? 0) + 1;
+                        $lastTeam[$player] = $team;
+                    }
+                }
+            }
+
+            foreach ($pending->values() as $fixture) {
                 if ($fixture->game_id !== null) {
                     throw ValidationException::withMessages(['teams' => 'A completed fixture is missing its teams.']);
                 }
-                [$home, $away] = $pairs[$index % count($pairs)];
-                if (random_int(0, 1)) {
-                    [$home, $away] = [$away, $home];
+                $bestScore = null;
+                $choices = [];
+                foreach ($pairs as [$first, $second]) {
+                    foreach ([[$first, $second], [$second, $first]] as [$home, $away]) {
+                        $homeCount = $usage[$fixture->home_user_id][$home->id] ?? 0;
+                        $awayCount = $usage[$fixture->away_user_id][$away->id] ?? 0;
+                        // Prefer unused teams for both players, then balance
+                        // frequency. Avoid consecutive repeats among equal choices.
+                        $score = [
+                            (int) ($homeCount > 0) + (int) ($awayCount > 0),
+                            max($homeCount, $awayCount),
+                            $homeCount + $awayCount,
+                            (int) (($lastTeam[$fixture->home_user_id] ?? null) === $home->id)
+                                + (int) (($lastTeam[$fixture->away_user_id] ?? null) === $away->id),
+                        ];
+                        if ($bestScore === null || $score < $bestScore) {
+                            $bestScore = $score;
+                            $choices = [[$home, $away]];
+                        } elseif ($score === $bestScore) {
+                            $choices[] = [$home, $away];
+                        }
+                    }
+                }
+                [$home, $away] = $choices[random_int(0, count($choices) - 1)];
+                foreach (['home' => $home, 'away' => $away] as $side => $team) {
+                    $player = $fixture->{$side.'_user_id'};
+                    $usage[$player][$team->id] = ($usage[$player][$team->id] ?? 0) + 1;
+                    $lastTeam[$player] = $team->id;
                 }
                 $fixture->home_team_id = $home->id;
                 $fixture->away_team_id = $away->id;

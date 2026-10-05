@@ -42,6 +42,36 @@ class TournamentScheduleTest extends TestCase
         }
     }
 
+    public function test_complete_home_and_away_cycles_are_balanced_per_opponent_in_every_round(): void
+    {
+        // Includes four players with 42 games over seven rounds, as well as
+        // different player counts and multiple return games per round.
+        foreach ([[4, 42, 7], [2, 42, 7], [3, 12, 3], [5, 24, 3], [4, 24, 2]] as [$count, $games, $rounds]) {
+            for ($run = 0; $run < 10; $run++) {
+                $fixtures = (new TournamentSchedule)->generate(range(1, $count), $games, $rounds);
+                $expected = intdiv($games, $rounds * 2 * ($count - 1));
+                $pairings = [];
+                foreach ($fixtures as $fixture) {
+                    $round = $fixture['round'];
+                    $home = $fixture['home_user_id'];
+                    $away = $fixture['away_user_id'];
+                    $this->assertNotSame($home, $away);
+                    $pairings[$round][$home][$away] = ($pairings[$round][$home][$away] ?? 0) + 1;
+                }
+                $this->assertCount($rounds, $pairings);
+                for ($round = 1; $round <= $rounds; $round++) {
+                    foreach (range(1, $count) as $home) {
+                        foreach (range(1, $count) as $away) {
+                            if ($home !== $away) {
+                                $this->assertSame($expected, $pairings[$round][$home][$away] ?? 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public function test_impossible_odd_player_appearance_count_is_rejected(): void
     {
         $this->expectException(InvalidArgumentException::class);

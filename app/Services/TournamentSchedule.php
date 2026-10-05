@@ -18,6 +18,34 @@ class TournamentSchedule
         shuffle($players);
         $roundByEdge = [];
         $perRound = intdiv($games, $rounds);
+        // Complete home-and-away cycles fit in each round: keep every
+        // opponent pairing balanced within that round, not just the season.
+        if ($games % $rounds === 0 && $perRound % (2 * ($n - 1)) === 0) {
+            $result = [];
+            for ($round = 1; $round <= $rounds; $round++) {
+                $fixtures = [];
+                for ($cycle = 0; $cycle < intdiv($perRound, 2 * ($n - 1)); $cycle++) {
+                    foreach ($players as $home) {
+                        foreach ($players as $away) {
+                            if ($home === $away) {
+                                continue;
+                            }
+                            $fixtures[] = [
+                                'round' => $round,
+                                'home_user_id' => $home,
+                                'away_user_id' => $away,
+                                'home_team_id' => null,
+                                'away_team_id' => null,
+                            ];
+                        }
+                    }
+                }
+                shuffle($fixtures);
+                array_push($result, ...$fixtures);
+            }
+
+            return $result;
+        }
         if ($games % $rounds === 0 && ($n * $perRound) % 2 === 0) {
             // Build regular factors first. Splitting shuffled individual games
             // only balances round sizes, not each player's appearances.
